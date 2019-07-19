@@ -89,4 +89,16 @@ public class VectorUtil {
         }
         return true;
     }
+
+    public static double dist2(double[] p, double[] lBound, double[] hBound) {
+        double sum = 0.0;
+        for (int i = 0; i < p.length; i++) {
+            if (p[i] < lBound[i]) {
+                sum += (lBound[i] - p[i]) * (lBound[i] - p[i]);
+            } else if (p[i] > hBound[i]) {
+                sum += (p[i] - hBound[i]) * (p[i] - hBound[i]);
+            }
+        }
+        return sum;
+    }
 }

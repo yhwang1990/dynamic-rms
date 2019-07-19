@@ -34,8 +34,33 @@ public class KdTree {
         root.delete(t);
     }
 
-    public TopKResult top_k(Utility u) {
+    public TopKResult top_k(int k, Utility u) {
         TopKResult result = new TopKResult();
+        KdNode cur = root;
+        while (cur.nodeType != NodeType.LEAF) {
+            if (VectorUtil.pointInRectangle(u.value, cur.lc.lBound, cur.lc.hBound)) {
+                cur = cur.lc;
+            } else {
+                cur = cur.rc;
+            }
+        }
+        for (Tuple t : cur.listTuples) {
+            double dist2 = VectorUtil.dist2(u.value, t.value);
+            if (dist2 < result.k_dist2) {
+                result.exact_result.offer(new RankItem(t.idx, dist2));
+            }
+            if (result.exact_result.size() == k) {
+                if (result.exact_result.peek() != null) {
+                    result.k_dist2 = result.exact_result.peek().dist2;
+                }
+            } else if (result.exact_result.size() > k) {
+                result.exact_result.poll();
+                if (result.exact_result.peek() != null) {
+                    result.k_dist2 = result.exact_result.peek().dist2;
+                }
+            }
+        }
+
         return result;
     }
 
@@ -53,6 +78,20 @@ public class KdTree {
                 queue.addFirst(cur.lc);
                 queue.addFirst(cur.rc);
             }
+        }
+    }
+
+    class RandNode implements Comparable<RandNode> {
+        KdNode node;
+        double score;
+        RandNode(KdNode node, double score) {
+            this.node = node;
+            this.score = score;
+        }
+
+        @Override
+        public int compareTo(RandNode other) {
+            return - Double.compare(this.score, other.score);
         }
     }
 
@@ -235,7 +274,6 @@ public class KdTree {
                 }
                 b.deleteCharAt(b.length() - 1).append("\n");
             }
-
             System.out.print(b.toString());
         }
     }
