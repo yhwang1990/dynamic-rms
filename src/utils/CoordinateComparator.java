@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 public class CoordinateComparator implements Comparator<Tuple> {
 
-    int coordinate;
+    private int coordinate;
 
     public CoordinateComparator(int coordinate) {
         this.coordinate = coordinate;

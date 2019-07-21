@@ -4,20 +4,18 @@ import java.util.Objects;
 
 public class RankItem implements Comparable<RankItem> {
     public int idx;
-    public double dist2;
-    public RankItem(int idx, double dist2) {
+    public double score;
+    public RankItem(int idx, double score) {
         this.idx = idx;
-        this.dist2 = dist2;
+        this.score = score;
     }
 
     @Override
     public int compareTo(RankItem other) {
-        if (this.dist2 > other.dist2) {
-            return -1;
-        } else if (this.dist2 < other.dist2) {
-            return 1;
+        if (this.score != other.score) {
+            return Double.compare(this.score, other.score);
         } else {
-            return (this.idx - other.idx);
+            return Integer.compare(this.idx, other.idx);
         }
     }
 

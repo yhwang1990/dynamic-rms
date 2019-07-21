@@ -81,22 +81,22 @@ public class VectorUtil {
         return 1.0 + dim - 2.0 * product;
     }
 
-    public static boolean pointInRectangle(double[] p, double[] lBound, double[] hBound) {
+    public static boolean pointInRectangle(double[] p, double[] min, double[] max) {
         for (int i = 0; i < p.length; i++) {
-            if (p[i] < lBound[i] || p[i] > hBound[i]) {
+            if (p[i] < min[i] || p[i] > max[i]) {
                 return false;
             }
         }
         return true;
     }
 
-    public static double dist2(double[] p, double[] lBound, double[] hBound) {
+    public static double dist2(double[] p, double[] min, double[] max) {
         double sum = 0.0;
         for (int i = 0; i < p.length; i++) {
-            if (p[i] < lBound[i]) {
-                sum += (lBound[i] - p[i]) * (lBound[i] - p[i]);
-            } else if (p[i] > hBound[i]) {
-                sum += (p[i] - hBound[i]) * (p[i] - hBound[i]);
+            if (p[i] < min[i]) {
+                sum += (min[i] - p[i]) * (min[i] - p[i]);
+            } else if (p[i] > max[i]) {
+                sum += (p[i] - max[i]) * (p[i] - max[i]);
             }
         }
         return sum;
