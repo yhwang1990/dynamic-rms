@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 public class UtilityGenerator {
-    static Random rand = new Random(0);
+    private static Random rand = new Random(0);
 
     public static List<Utility> uniformGenerator(int dim, int size) {
         List<Utility> listUtilities = new ArrayList<>();
