@@ -60,9 +60,9 @@ public class KdTree {
 
         PriorityQueue<RandNode> queue = new PriorityQueue<>();
         queue.offer(new RandNode(root, 0.0));
-        while(!queue.isEmpty() && queue.peek().dist2 <= min_dist) {
+        while (!queue.isEmpty() && queue.peek().dist2 <= min_dist) {
             KdNode cur_node = queue.poll().node;
-            if(cur_node.nodeType == NodeType.LEAF) {
+            if (cur_node.nodeType == NodeType.LEAF) {
                 if (cur_node == best_node)
                     continue;
                 for (Tuple t : cur_node.listTuples) {
@@ -94,10 +94,10 @@ public class KdTree {
     public void BFSTraverse() {
         LinkedList<KdNode> queue = new LinkedList<>();
         queue.add(root);
-        while(!queue.isEmpty()) {
+        while (!queue.isEmpty()) {
             KdNode cur = queue.removeLast();
             cur.print();
-            if(cur.nodeType == NodeType.NON_LEAF) {
+            if (cur.nodeType == NodeType.NON_LEAF) {
                 queue.addFirst(cur.lc);
                 queue.addFirst(cur.rc);
             }
@@ -107,6 +107,7 @@ public class KdTree {
     class RandNode implements Comparable<RandNode> {
         KdNode node;
         double dist2;
+
         RandNode(KdNode node, double dist2) {
             this.node = node;
             this.dist2 = dist2;
@@ -125,7 +126,7 @@ public class KdTree {
 
         NodeType nodeType;
         List<Tuple> listTuples;
-        KdNode lc,rc;
+        KdNode lc, rc;
 
         KdNode(double[] lBound, double[] hBound, List<Tuple> listTuples) {
             this.nodeType = NodeType.LEAF;
@@ -235,9 +236,9 @@ public class KdTree {
                 LinkedList<KdNode> queue = new LinkedList<>();
                 queue.addFirst(lc);
                 queue.addFirst(rc);
-                while(!queue.isEmpty()) {
+                while (!queue.isEmpty()) {
                     KdNode cur = queue.removeLast();
-                    if(cur.nodeType == NodeType.NON_LEAF) {
+                    if (cur.nodeType == NodeType.NON_LEAF) {
                         queue.addFirst(cur.lc);
                         queue.addFirst(cur.rc);
                     } else {
@@ -288,11 +289,11 @@ public class KdTree {
             for (int i = 0; i < dim; i++) {
                 b.append("[").append(lBound[i]).append(",").append(hBound[i]).append("] ");
             }
-            if(nodeType == NodeType.NON_LEAF){
+            if (nodeType == NodeType.NON_LEAF) {
                 b.append("\n");
             } else {
                 b.append(" ");
-                for(Tuple t : listTuples) {
+                for (Tuple t : listTuples) {
                     b.append(t.idx).append(",");
                 }
                 b.deleteCharAt(b.length() - 1).append("\n");

@@ -1,6 +1,7 @@
 package index;
 
 import utils.NodeType;
+import utils.TopKResult;
 import utils.Utility;
 import utils.VectorUtil;
 
@@ -13,20 +14,22 @@ public class ConeTree {
     private ConeNode root;
     private int dim;
     private double tau;
+    private TopKResult[] topKResults;
 
-    public ConeTree(int dim, double eps, List<Utility> samples) {
+    public ConeTree(int dim, double eps, List<Utility> samples, TopKResult[] topKResults) {
         this.dim = dim;
-        this.tau = 1.0 -eps;
-        this.root = new ConeNode(new ArrayList<>(samples));
+        this.tau = 1.0 - eps;
+        this.topKResults = topKResults;
+        this.root = new ConeNode(null, new ArrayList<>(samples));
     }
 
     public void BFSTraverse() {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.add(root);
-        while(!queue.isEmpty()) {
+        while (!queue.isEmpty()) {
             ConeNode cur = queue.removeLast();
             cur.print();
-            if(cur.nodeType == NodeType.NON_LEAF) {
+            if (cur.nodeType == NodeType.NON_LEAF) {
                 queue.addFirst(cur.lc);
                 queue.addFirst(cur.rc);
             }
@@ -40,13 +43,14 @@ public class ConeTree {
 
         NodeType nodeType;
         List<Utility> listUtilities;
-        ConeNode lc,rc;
+        ConeNode lc, rc, par;
 
-        ConeNode(List<Utility> listUtilities) {
+        ConeNode(ConeNode par, List<Utility> listUtilities) {
+            this.par = par;
             this.nodeType = NodeType.LEAF;
+
             this.listUtilities = listUtilities;
             this.size = listUtilities.size();
-            this.min_k_score = 0.0;
 
             this.lc = null;
             this.rc = null;
@@ -63,12 +67,11 @@ public class ConeTree {
             }
             VectorUtil.to_unit(this.centroid);
 
-
             this.cosine_aperture = 1.0;
-            for(Utility u : listUtilities) {
-                double cosine = VectorUtil.cosine_unit(u.value, this.centroid);
-                if (cosine < this.cosine_aperture)
-                    this.cosine_aperture = cosine;
+            this.min_k_score = Double.MAX_VALUE;
+            for (Utility u : listUtilities) {
+                this.cosine_aperture = Math.min(VectorUtil.cosine_unit(u.value, this.centroid), this.cosine_aperture);
+                this.min_k_score = Math.min(topKResults[u.idx].k_score, min_k_score);
             }
 
             if (this.cosine_aperture < tau) {
@@ -80,7 +83,7 @@ public class ConeTree {
                     double l_cosine = VectorUtil.cosine_unit(u.value, pivots[0]);
                     double r_cosine = VectorUtil.cosine_unit(u.value, pivots[1]);
 
-                    if(l_cosine >= r_cosine) {
+                    if (l_cosine >= r_cosine) {
                         listLeftUtilities.add(u);
                     } else {
                         listRightUtilities.add(u);
@@ -89,8 +92,8 @@ public class ConeTree {
 
                 this.nodeType = NodeType.NON_LEAF;
 
-                this.lc = new ConeNode(listLeftUtilities);
-                this.rc = new ConeNode(listRightUtilities);
+                this.lc = new ConeNode(this, listLeftUtilities);
+                this.rc = new ConeNode(this, listRightUtilities);
 
                 this.listUtilities.clear();
             }
@@ -102,7 +105,7 @@ public class ConeTree {
             double[] u0 = listUtilities.get(0).value;
 
             double l_cosine = 1.0;
-            for(Utility u : listUtilities) {
+            for (Utility u : listUtilities) {
                 double cosine = VectorUtil.cosine_unit(u.value, u0);
                 if (cosine < l_cosine) {
                     l_cosine = cosine;
@@ -111,7 +114,7 @@ public class ConeTree {
             }
 
             double r_cosine = 1.0;
-            for(Utility u : listUtilities) {
+            for (Utility u : listUtilities) {
                 double cosine = VectorUtil.cosine_unit(u.value, pivots[0]);
                 if (cosine < r_cosine) {
                     r_cosine = cosine;
@@ -130,11 +133,11 @@ public class ConeTree {
                 b.append(centroid[i]).append(" ");
             }
             b.deleteCharAt(b.length() - 1).append("] ").append(cosine_aperture);
-            if(nodeType == NodeType.NON_LEAF){
+            if (nodeType == NodeType.NON_LEAF) {
                 b.append("\n");
             } else {
                 b.append(" ");
-                for(Utility u : listUtilities) {
+                for (Utility u : listUtilities) {
                     b.append(u.idx).append(",");
                 }
                 b.deleteCharAt(b.length() - 1).append("\n");
