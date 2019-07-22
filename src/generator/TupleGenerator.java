@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class UniformGenerator {
+public class TupleGenerator {
     static Random rand = new Random(0);
 
     public static List<Tuple> uniformGenerator(int dim, int size) {

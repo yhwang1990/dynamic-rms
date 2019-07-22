@@ -15,13 +15,11 @@ public class VectorUtil {
         return inner_product(p, q);
     }
 
-    public static double[] unit_norm(double[] p) {
+    public static void to_unit(double[] p) {
         double norm = norm(p);
-        double[] unit_p = new double[p.length];
         for (int i = 0; i < p.length; i++) {
-            unit_p[i] = p[i] / norm;
+            p[i] /= norm;
         }
-        return unit_p;
     }
 
     public static double dist(double[] p, double[] q) {

@@ -35,94 +35,8 @@ public class KdTree {
         root.delete(t);
     }
 
-    public TopKResult topKSearch(int k, Utility u) {
-        TopKResult result = new TopKResult();
-
-        KdNode best_node = root;
-        while (best_node.nodeType != NodeType.LEAF) {
-            if (VectorUtil.pointInRectangle(u.value, best_node.lc.lBound, best_node.lc.hBound)) {
-                best_node = best_node.lc;
-            } else {
-                best_node = best_node.rc;
-            }
-        }
-
-        for (Tuple t : best_node.listTuples) {
-            double score = VectorUtil.inner_product(u.value, t.value);
-            if (score > result.k_score) {
-                result.exact_result.offer(new RankItem(t.idx, score));
-
-                if (result.exact_result.size() == k) {
-                    if (! result.exact_result.isEmpty()) {
-                        result.k_score = result.exact_result.peek().score;
-                    }
-                } else if (result.exact_result.size() > k) {
-                    result.exact_result.poll();
-                    if (! result.exact_result.isEmpty()) {
-                        result.k_score = result.exact_result.peek().score;
-                    }
-                }
-            }
-        }
-
-        double min_dist = Double.MAX_VALUE;
-        if (result.k_score > 0) {
-            min_dist = VectorUtil.product2dist(dim - 1, result.k_score);
-        }
-
-        PriorityQueue<RandNode> queue = new PriorityQueue<>();
-        queue.offer(new RandNode(root, 0.0));
-        while(!queue.isEmpty() && queue.peek().dist2 <= min_dist) {
-            KdNode cur_node = queue.poll().node;
-            if(cur_node.nodeType == NodeType.LEAF) {
-                if (cur_node == best_node)
-                    continue;
-                for (Tuple t : cur_node.listTuples) {
-                    double score = VectorUtil.inner_product(u.value, t.value);
-                    if (score > result.k_score) {
-                        result.exact_result.offer(new RankItem(t.idx, score));
-
-                        if (result.exact_result.size() == k) {
-                            if (! result.exact_result.isEmpty()) {
-                                result.k_score = result.exact_result.peek().score;
-                            }
-
-                            if (result.k_score > 0) {
-                                min_dist = VectorUtil.product2dist(dim - 1, result.k_score);
-                            }
-                        } else if (result.exact_result.size() > k) {
-                            result.exact_result.poll();
-                            if (! result.exact_result.isEmpty()) {
-                                result.k_score = result.exact_result.peek().score;
-                            }
-
-                            if (result.k_score > 0) {
-                                min_dist = VectorUtil.product2dist(dim - 1, result.k_score);
-                            }
-                        }
-                    }
-                }
-            } else {
-                double l_dist2 = VectorUtil.dist2(u.value, cur_node.lc.lBound, cur_node.lc.hBound);
-                if (l_dist2 <= min_dist) {
-                    queue.offer(new RandNode(cur_node.lc, l_dist2));
-                }
-                double r_dist2 = VectorUtil.dist2(u.value, cur_node.rc.lBound, cur_node.rc.hBound);
-                if (r_dist2 <= min_dist) {
-                    queue.offer(new RandNode(cur_node.rc, r_dist2));
-                }
-            }
-        }
-
-        for (RankItem item : result.exact_result) {
-            result.results.add(item.idx);
-        }
-
-        return result;
-    }
-
     public TopKResult approxTopKSearch(int k, double eps, Utility u) {
-        TopKResult result = new TopKResult();
+        TopKResult result = new TopKResult(k, eps);
 
         KdNode best_node = root;
         while (best_node.nodeType != NodeType.LEAF) {
@@ -135,38 +49,7 @@ public class KdTree {
 
         for (Tuple t : best_node.listTuples) {
             double score = VectorUtil.inner_product(u.value, t.value);
-            if (score > result.k_score) {
-                result.exact_result.offer(new RankItem(t.idx, score));
-                System.out.println("add exact " + t.idx);
-
-                if (result.exact_result.size() == k) {
-                    if (! result.exact_result.isEmpty()) {
-                        result.k_score = result.exact_result.peek().score;
-                        System.out.println("k_score = " + result.k_score);
-                    }
-                } else if (! result.exact_result.isEmpty() && result.exact_result.size() > k) {
-                    RankItem deleted_item = result.exact_result.poll();
-                    System.out.println("delete exact " + deleted_item.idx);
-                    if (! result.exact_result.isEmpty()) {
-                        result.k_score = result.exact_result.peek().score;
-                        System.out.println("k_score = " + result.k_score);
-                    }
-
-                    if (deleted_item.score >= (1 - eps) * result.k_score) {
-                        result.approximate_result.offer(deleted_item);
-                        System.out.println("add approx " + deleted_item.idx);
-                    }
-
-                    while(! result.approximate_result.isEmpty()
-                            && result.approximate_result.peek().score < (1 - eps) * result.k_score) {
-                        RankItem deleted_approx_item = result.approximate_result.poll();
-                        System.out.println("delete approx " + deleted_approx_item.idx);
-                    }
-                }
-            } else if (score >= (1 - eps) * result.k_score) {
-                result.approximate_result.offer(new RankItem(t.idx, score));
-                System.out.println("add approx " + t.idx);
-            }
+            result.update(t.idx, score);
         }
 
         double min_dist = Double.MAX_VALUE;
@@ -184,47 +67,11 @@ public class KdTree {
                     continue;
                 for (Tuple t : cur_node.listTuples) {
                     double score = VectorUtil.inner_product(u.value, t.value);
-                    if (score > result.k_score) {
-                        result.exact_result.offer(new RankItem(t.idx, score));
-                        System.out.println("add exact " + t.idx);
+                    boolean k_score_update = result.update(t.idx, score);
 
-                        if (result.exact_result.size() == k) {
-                            if (! result.exact_result.isEmpty()) {
-                                result.k_score = result.exact_result.peek().score;
-                                System.out.println("k_score = " + result.k_score);
-                            }
-
-                            if (result.k_score > 0) {
-                                min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
-                                System.out.println("min_dist = " + min_dist);
-                            }
-                        } else if (! result.exact_result.isEmpty() && result.exact_result.size() > k) {
-                            RankItem deleted_item = result.exact_result.poll();
-                            System.out.println("delete exact " + deleted_item.idx);
-                            if (! result.exact_result.isEmpty()) {
-                                result.k_score = result.exact_result.peek().score;
-                                System.out.println("k_score = " + result.k_score);
-                            }
-
-                            if (result.k_score > 0) {
-                                min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
-                                System.out.println("min_dist = " + min_dist);
-                            }
-
-                            if (deleted_item.score >= (1 - eps) * result.k_score) {
-                                result.approximate_result.offer(deleted_item);
-                                System.out.println("add approx " + deleted_item.idx);
-                            }
-
-                            while(! result.approximate_result.isEmpty()
-                                    && result.approximate_result.peek().score < (1 - eps) * result.k_score) {
-                                RankItem deleted_approx_item = result.approximate_result.poll();
-                                System.out.println("delete approx " + deleted_approx_item.idx);
-                            }
-                        }
-                    } else if (score >= (1 - eps) * result.k_score) {
-                        result.approximate_result.offer(new RankItem(t.idx, score));
-                        System.out.println("add approx " + t.idx);
+                    if (k_score_update) {
+                        min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
+                        System.out.println("min_dist = " + min_dist);
                     }
                 }
             } else {
@@ -239,13 +86,7 @@ public class KdTree {
             }
         }
 
-        for (RankItem item : result.exact_result) {
-            result.results.add(item.idx);
-        }
-
-        for (RankItem item : result.approximate_result) {
-            result.results.add(item.idx);
-        }
+        result.refreshResults();
 
         return result;
     }
