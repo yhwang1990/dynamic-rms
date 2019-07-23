@@ -28,16 +28,12 @@ public class TopKResult {
         if (score > k_score) {
             exact_result.offer(new RankItem(idx, score));
             k_score_update = true;
-            if (exact_result.size() == k) {
-                if (! exact_result.isEmpty()) {
-                    k_score = exact_result.peek().score;
-//                    System.out.println("k_score = " + k_score);
-                }
+            if (! exact_result.isEmpty() && exact_result.size() == k) {
+                k_score = exact_result.peek().score;
             } else if (! exact_result.isEmpty() && exact_result.size() > k) {
                 RankItem deleted_item = exact_result.poll();
                 if (! exact_result.isEmpty()) {
                     k_score = exact_result.peek().score;
-//                    System.out.println("k_score = " + k_score);
                 }
 
                 if (deleted_item.score >= (1 - eps) * k_score) {

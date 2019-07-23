@@ -1,13 +1,11 @@
 package index;
 
+import utils.SetOperation;
 import utils.TopKResult;
 import utils.Tuple;
 import utils.Utility;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DualTree {
 
@@ -53,7 +51,14 @@ public class DualTree {
         }
     }
 
-    public void insert(Tuple t) {}
+    public List<SetOperation> insert(Tuple t) {
+        List<SetOperation> operations = new ArrayList<>();
+        tupleIndex.insert(t);
+        utilityIndex.insert(t, operations);
+        return operations;
+    }
 
-    public void delete(Tuple t) {}
+    public List<SetOperation> delete(Tuple t) {
+        return null;
+    }
 }
