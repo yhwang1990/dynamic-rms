@@ -26,12 +26,12 @@ public class KdTree {
     }
 
     public void insert(Tuple t) {
-        System.out.println("Insert " + t.idx);
+//        System.out.println("Insert " + t.idx);
         root.insert(t);
     }
 
     public void delete(Tuple t) {
-        System.out.println("Delete " + t.idx);
+//        System.out.println("Delete " + t.idx);
         root.delete(t);
     }
 
@@ -55,7 +55,7 @@ public class KdTree {
         double min_dist = Double.MAX_VALUE;
         if (result.k_score > 0) {
             min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
-            System.out.println("min_dist = " + min_dist);
+//            System.out.println("min_dist = " + min_dist);
         }
 
         PriorityQueue<RandNode> queue = new PriorityQueue<>();
@@ -71,7 +71,7 @@ public class KdTree {
 
                     if (k_score_update) {
                         min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
-                        System.out.println("min_dist = " + min_dist);
+//                        System.out.println("min_dist = " + min_dist);
                     }
                 }
             } else {

@@ -20,6 +20,7 @@ public class UtilityGenerator {
             }
             value[dim] = 0;
             VectorUtil.to_unit(value);
+
             listUtilities.add(new Utility(i, value));
         }
 

@@ -16,7 +16,7 @@ public class TupleGenerator {
         for (int i = 0; i < size; i++) {
             double[] value = new double[dim + 1];
             for (int j = 0; j < dim; j++) {
-                value[j] = Math.round(rand.nextDouble() * 10.0) / 10.0;
+                value[j] = Math.round(rand.nextDouble() * 100.0) / 100.0;
             }
             value[dim] = Math.sqrt(dim - VectorUtil.norm2(value));
             listTuples.add(new Tuple(i, value));

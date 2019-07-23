@@ -128,7 +128,7 @@ public class ConeTree {
         private void print() {
             StringBuilder b = new StringBuilder();
             b.append(nodeType).append(" ");
-            b.append(size).append(" [");
+            b.append(size).append(" ").append(min_k_score).append(" [");
             for (int i = 0; i < dim; i++) {
                 b.append(centroid[i]).append(" ");
             }
