@@ -10,26 +10,26 @@ public class KdTree {
     private int dim;
     private int capacity;
 
-    KdTree(int dim, int capacity, double[] min_range, double[] max_range) {
+    KdTree(int dim, int capacity, double[] min_range, double[] max_range, DualTree dualTree) {
         this.dim = dim;
         this.capacity = capacity;
 
         List<Tuple> tuples = new ArrayList<>();
-        for (int i = 0; i < Dataset.TUPLES.length; i++) {
-            if (! Dataset.IS_DELETED[i]) {
-                tuples.add(new Tuple(i, Dataset.TUPLES[i]));
+        for (int i = 0; i < dualTree.tuples.length; i++) {
+            if (! dualTree.isDeleted[i]) {
+                tuples.add(new Tuple(i, dualTree.tuples[i]));
             }
         }
 
         this.root = new KdNode(min_range, max_range, tuples);
     }
 
-    void insert(int idx) {
-        root.insert(new Tuple(idx, Dataset.TUPLES[idx]));
+    void insert(int idx, double[] values) {
+        root.insert(new Tuple(idx, values));
     }
 
-    void delete(int idx) {
-        root.delete(new Tuple(idx, Dataset.TUPLES[idx]));
+    void delete(int idx, double[] values) {
+        root.delete(new Tuple(idx, values));
     }
 
     TopKResult approxTopKSearch(int k, double eps, double[] u) {
@@ -52,7 +52,6 @@ public class KdTree {
         double min_dist = Double.MAX_VALUE;
         if (result.k_score > 0) {
             min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
-//            System.out.println("min_dist = " + min_dist);
         }
 
         PriorityQueue<RandNode> queue = new PriorityQueue<>();
@@ -68,7 +67,6 @@ public class KdTree {
 
                     if (k_score_update) {
                         min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
-//                        System.out.println("min_dist = " + min_dist);
                     }
                 }
             } else {

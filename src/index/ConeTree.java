@@ -1,7 +1,7 @@
 package index;
 
-import utils.Dataset;
 import utils.NodeType;
+import utils.SetOperation;
 import utils.VectorUtil;
 
 import java.util.ArrayList;
@@ -11,23 +11,25 @@ import java.util.Objects;
 
 public class ConeTree {
 
+    private DualTree dualTree;
     private ConeNode root;
     private int dim;
     private double tau;
 
-    ConeTree(int dim, double eps) {
+    ConeTree(int dim, double eps, DualTree dualTree) {
         this.dim = dim;
         this.tau = 1.0 - eps;
+        this.dualTree = dualTree;
 
         List<Utility> utilities = new ArrayList<>();
-        for (int i = 0; i < Dataset.UTILITIES.length; i++) {
-            utilities.add(new Utility(i, Dataset.TOP_K_RESULTS[i].k_score, Dataset.UTILITIES[i]));
+        for (int i = 0; i < this.dualTree.utilities.length; i++) {
+            utilities.add(new Utility(i, this.dualTree.topKResults[i].k_score, this.dualTree.utilities[i]));
         }
 
         this.root = new ConeNode(null, utilities);
     }
 
-    void BFSTraverse() {
+    public void BFSTraverse() {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.add(root);
         while (!queue.isEmpty()) {
@@ -38,6 +40,58 @@ public class ConeTree {
                 queue.addFirst(cur.rc);
             }
         }
+    }
+
+    public void insert(int t_idx, double[] t_values, List<SetOperation> operations) {
+        LinkedList<ConeNode> queue = new LinkedList<>();
+        queue.addLast(root);
+        while (!queue.isEmpty()) {
+            ConeNode cur_node = queue.removeFirst();
+            if (cur_node.nodeType == NodeType.LEAF) {
+                boolean outdated = false;
+                for (Utility u : cur_node.listUtilities) {
+                    double score = VectorUtil.inner_product(t_values, u.values);
+                    boolean k_updated = dualTree.topKResults[u.idx].add(u.idx, t_idx, score, operations);
+                    if (k_updated) {
+                        if (cur_node.min_k_score == u.k_score) {
+                            outdated = true;
+                        }
+                        u.k_score = dualTree.topKResults[u.idx].k_score;
+                    }
+                }
+                if (outdated) {
+                    cur_node.min_k_score = Double.MAX_VALUE;
+                    for (Utility u : cur_node.listUtilities) {
+                        cur_node.min_k_score = Math.min(u.k_score, cur_node.min_k_score);
+                    }
+
+                    ConeNode parNode = cur_node.par;
+                    while (parNode != null) {
+                        parNode.min_k_score = Math.min(parNode.lc.min_k_score, parNode.rc.min_k_score);
+                        if (parNode.min_k_score < cur_node.min_k_score) {
+                            break;
+                        } else {
+                            parNode = parNode.par;
+                        }
+                    }
+                }
+            } else {
+                if (max_inner_product(t_values, cur_node.lc) >= (1 - dualTree.epsilon) * cur_node.lc.min_k_score) {
+                    queue.addFirst(cur_node.lc);
+                }
+                if (max_inner_product(t_values, cur_node.rc) >= (1 - dualTree.epsilon) * cur_node.rc.min_k_score) {
+                    queue.addFirst(cur_node.rc);
+                }
+            }
+        }
+    }
+
+    private double max_inner_product(double[] t, ConeNode node) {
+        double cosine = VectorUtil.cosine(t, node.centroid);
+        if (cosine > node.cosine_aperture)
+            return VectorUtil.norm(t);
+        else
+            return VectorUtil.norm(t) * VectorUtil.cosine_diff(cosine, node.cosine_aperture);
     }
 
     class ConeNode {

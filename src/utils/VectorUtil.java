@@ -10,6 +10,12 @@ public class VectorUtil {
         return inner_product(p, q) / (norm(p) * norm(q));
     }
 
+    public static double cosine_diff(double cos1, double cos2) {
+        double sin1 = Math.sqrt(1 - cos1 * cos1);
+        double sin2 = Math.sqrt(1 - cos2 * cos2);
+        return cos1 * cos2 + sin1 * sin2;
+    }
+
     public static double cosine_unit(double[] p, double[] q) {
         if (p.length != q.length)
             System.err.println("dimension not equal");

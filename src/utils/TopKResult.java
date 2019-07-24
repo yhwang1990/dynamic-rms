@@ -1,6 +1,7 @@
 package utils;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.PriorityQueue;
 
 public class TopKResult {
@@ -22,10 +23,10 @@ public class TopKResult {
     }
 
     public boolean update(int idx, double score) {
-        boolean k_score_update = false;
+        boolean k_updated = false;
         if (score > k_score) {
             exact_result.offer(new RankItem(idx, score));
-            k_score_update = true;
+            k_updated = true;
             if (! exact_result.isEmpty() && exact_result.size() == k) {
                 k_score = exact_result.peek().score;
             } else if (! exact_result.isEmpty() && exact_result.size() > k) {
@@ -46,7 +47,43 @@ public class TopKResult {
             approximate_result.offer(new RankItem(idx, score));
         }
 
-        return k_score_update;
+        return k_updated;
+    }
+
+    public boolean add(int u_idx, int t_idx, double score, List<SetOperation> operations) {
+        boolean k_updated = false;
+        if (score > k_score) {
+            exact_result.offer(new RankItem(t_idx, score));
+            results.add(t_idx);
+            operations.add(new SetOperation(OprType.S_ADD, t_idx, u_idx));
+            k_updated = true;
+
+            if (! exact_result.isEmpty() && exact_result.size() > k) {
+                RankItem deleted_item = exact_result.poll();
+                if (! exact_result.isEmpty()) {
+                    k_score = exact_result.peek().score;
+                }
+
+                if (deleted_item.score >= (1 - eps) * k_score) {
+                    approximate_result.offer(deleted_item);
+                } else {
+                    results.remove(deleted_item.idx);
+                    operations.add(new SetOperation(OprType.S_DEL, deleted_item.idx, u_idx));
+                }
+
+                while(! approximate_result.isEmpty() && approximate_result.peek().score < (1 - eps) * k_score) {
+                    RankItem obsolete_item = approximate_result.poll();
+                    results.remove(obsolete_item.idx);
+                    operations.add(new SetOperation(OprType.S_DEL, obsolete_item.idx, u_idx));
+                }
+            }
+        } else if (score >= (1 - eps) * k_score) {
+            approximate_result.offer(new RankItem(t_idx, score));
+            results.add(t_idx);
+            operations.add(new SetOperation(OprType.S_ADD, t_idx, u_idx));
+        }
+
+        return k_updated;
     }
 
     public void refreshResults() {
