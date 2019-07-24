@@ -2,10 +2,7 @@ package index;
 
 import utils.*;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class KdTree {
 
@@ -13,34 +10,34 @@ public class KdTree {
     private int dim;
     private int capacity;
 
-    public KdTree(int dim, int capacity, double[] min_range, double[] max_range) {
+    KdTree(int dim, int capacity, double[] min_range, double[] max_range) {
         this.dim = dim;
         this.capacity = capacity;
-        this.root = new KdNode(min_range, max_range, new ArrayList<>());
+
+        List<Tuple> tuples = new ArrayList<>();
+        for (int i = 0; i < Dataset.TUPLES.length; i++) {
+            if (! Dataset.IS_DELETED[i]) {
+                tuples.add(new Tuple(i, Dataset.TUPLES[i]));
+            }
+        }
+
+        this.root = new KdNode(min_range, max_range, tuples);
     }
 
-    public KdTree(int dim, int capacity, double[] min_range, double[] max_range, List<Tuple> data) {
-        this.dim = dim;
-        this.capacity = capacity;
-        this.root = new KdNode(min_range, max_range, new ArrayList<>(data));
+    void insert(int idx) {
+        root.insert(new Tuple(idx, Dataset.TUPLES[idx]));
     }
 
-    public void insert(Tuple t) {
-//        System.out.println("Insert " + t.idx);
-        root.insert(t);
+    void delete(int idx) {
+        root.delete(new Tuple(idx, Dataset.TUPLES[idx]));
     }
 
-    public void delete(Tuple t) {
-//        System.out.println("Delete " + t.idx);
-        root.delete(t);
-    }
-
-    public TopKResult approxTopKSearch(int k, double eps, Utility u) {
+    TopKResult approxTopKSearch(int k, double eps, double[] u) {
         TopKResult result = new TopKResult(k, eps);
 
         KdNode best_node = root;
         while (best_node.nodeType != NodeType.LEAF) {
-            if (VectorUtil.pointInRectangle(u.value, best_node.lc.lBound, best_node.lc.hBound)) {
+            if (VectorUtil.pointInRectangle(u, best_node.lc.lBound, best_node.lc.hBound)) {
                 best_node = best_node.lc;
             } else {
                 best_node = best_node.rc;
@@ -48,7 +45,7 @@ public class KdTree {
         }
 
         for (Tuple t : best_node.listTuples) {
-            double score = VectorUtil.inner_product(u.value, t.value);
+            double score = VectorUtil.inner_product(u, t.values);
             result.update(t.idx, score);
         }
 
@@ -66,7 +63,7 @@ public class KdTree {
                 if (cur_node == best_node)
                     continue;
                 for (Tuple t : cur_node.listTuples) {
-                    double score = VectorUtil.inner_product(u.value, t.value);
+                    double score = VectorUtil.inner_product(u, t.values);
                     boolean k_score_update = result.update(t.idx, score);
 
                     if (k_score_update) {
@@ -75,11 +72,11 @@ public class KdTree {
                     }
                 }
             } else {
-                double l_dist2 = VectorUtil.dist2(u.value, cur_node.lc.lBound, cur_node.lc.hBound);
+                double l_dist2 = VectorUtil.dist2(u, cur_node.lc.lBound, cur_node.lc.hBound);
                 if (l_dist2 <= min_dist) {
                     queue.offer(new RandNode(cur_node.lc, l_dist2));
                 }
-                double r_dist2 = VectorUtil.dist2(u.value, cur_node.rc.lBound, cur_node.rc.hBound);
+                double r_dist2 = VectorUtil.dist2(u, cur_node.rc.lBound, cur_node.rc.hBound);
                 if (r_dist2 <= min_dist) {
                     queue.offer(new RandNode(cur_node.rc, r_dist2));
                 }
@@ -142,8 +139,8 @@ public class KdTree {
 
             if (this.size > 2 * capacity) {
                 int split_coordinate = findSplitCoordinate(this.lBound, this.hBound);
-                this.listTuples.sort(new CoordinateComparator(split_coordinate));
-                double split_point = this.listTuples.get(this.size / 2).value[split_coordinate];
+                this.listTuples.sort(new TupleComparator(split_coordinate));
+                double split_point = this.listTuples.get(this.size / 2).values[split_coordinate];
 
                 List<Tuple> listLeftTuples = new ArrayList<>(this.listTuples.subList(0, this.size / 2));
                 List<Tuple> listRightTuples = new ArrayList<>(this.listTuples.subList(this.size / 2, this.size));
@@ -183,7 +180,7 @@ public class KdTree {
         private void insert(Tuple t) {
             size += 1;
             if (nodeType == NodeType.NON_LEAF) {
-                if (VectorUtil.pointInRectangle(t.value, lc.lBound, lc.hBound)) {
+                if (VectorUtil.pointInRectangle(t.values, lc.lBound, lc.hBound)) {
                     lc.insert(t);
                 } else {
                     rc.insert(t);
@@ -192,8 +189,8 @@ public class KdTree {
                 listTuples.add(t);
                 if (size > 2 * capacity) {
                     int split_coordinate = findSplitCoordinate(lBound, hBound);
-                    listTuples.sort(new CoordinateComparator(split_coordinate));
-                    double split_point = listTuples.get(size / 2).value[split_coordinate];
+                    listTuples.sort(new TupleComparator(split_coordinate));
+                    double split_point = listTuples.get(size / 2).values[split_coordinate];
 
                     List<Tuple> listLeftTuples = new ArrayList<>(listTuples.subList(0, size / 2));
                     List<Tuple> listRightTuples = new ArrayList<>(listTuples.subList(size / 2, size));
@@ -225,10 +222,10 @@ public class KdTree {
                 listTuples.remove(t);
             } else if (nodeType == NodeType.NON_LEAF && lc.size > capacity && rc.size > capacity) {
                 size -= 1;
-                if (VectorUtil.pointInRectangle(t.value, lc.lBound, lc.hBound)) {
+                if (VectorUtil.pointInRectangle(t.values, lc.lBound, lc.hBound)) {
                     lc.delete(t);
                 }
-                if (VectorUtil.pointInRectangle(t.value, rc.lBound, rc.hBound)) {
+                if (VectorUtil.pointInRectangle(t.values, rc.lBound, rc.hBound)) {
                     rc.delete(t);
                 }
             } else {
@@ -255,8 +252,8 @@ public class KdTree {
                     rc = null;
                 } else {
                     int split_coordinate = findSplitCoordinate(lBound, hBound);
-                    listTuples.sort(new CoordinateComparator(split_coordinate));
-                    double split_point = listTuples.get(size / 2).value[split_coordinate];
+                    listTuples.sort(new TupleComparator(split_coordinate));
+                    double split_point = listTuples.get(size / 2).values[split_coordinate];
 
                     List<Tuple> listLeftTuples = new ArrayList<>(listTuples.subList(0, size / 2));
                     List<Tuple> listRightTuples = new ArrayList<>(listTuples.subList(size / 2, size));
@@ -299,6 +296,43 @@ public class KdTree {
                 b.deleteCharAt(b.length() - 1).append("\n");
             }
             System.out.print(b.toString());
+        }
+    }
+
+    private class Tuple {
+        private int idx;
+        private double[] values;
+
+        private Tuple(int idx, double[] values) {
+            this.idx = idx;
+            this.values = values;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Tuple)) return false;
+            Tuple tuple = (Tuple) o;
+            return idx == tuple.idx;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(idx);
+        }
+    }
+
+    private class TupleComparator implements Comparator<Tuple> {
+
+        private int coordinate;
+
+        private TupleComparator(int coordinate) {
+            this.coordinate = coordinate;
+        }
+
+        @Override
+        public int compare(Tuple t1, Tuple t2) {
+            return Double.compare(t1.values[coordinate], t2.values[coordinate]);
         }
     }
 }

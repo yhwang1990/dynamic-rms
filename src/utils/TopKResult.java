@@ -12,8 +12,6 @@ public class TopKResult {
     public double k_score;
     public HashSet<Integer> results;
 
-
-
     public TopKResult(int k, double eps) {
         this.k = k;
         this.eps = eps;

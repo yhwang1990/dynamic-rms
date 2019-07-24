@@ -1,7 +1,5 @@
 package utils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.PriorityQueue;
 
 public class VectorUtil {
@@ -104,14 +102,14 @@ public class VectorUtil {
         return sum;
     }
 
-    public static void bruteForceTopK(int k, double eps, Utility u, List<Tuple> tuples) {
+    public static void bruteForceTopK(int k, double eps, double[] u, double[][] tuples) {
         double k_score = 0.0;
         PriorityQueue<RankItem> exactResult = new PriorityQueue<>();
         PriorityQueue<RankItem> approxResult = new PriorityQueue<>();
-        for (Tuple t : tuples) {
-            double score = inner_product(u.value, t.value);
+        for (int i = 0; i < tuples.length; i++) {
+            double score = inner_product(u, tuples[i]);
             if (score > k_score) {
-                exactResult.offer(new RankItem(t.idx, score));
+                exactResult.offer(new RankItem(i, score));
                 if (! exactResult.isEmpty() && exactResult.size() == k) {
                     k_score = exactResult.peek().score;
                 } else if (! exactResult.isEmpty() && exactResult.size() > k) {
@@ -129,14 +127,8 @@ public class VectorUtil {
                     }
                 }
             } else if (score >= (1 - eps) * k_score) {
-                approxResult.offer(new RankItem(t.idx, score));
+                approxResult.offer(new RankItem(i, score));
             }
-        }
-    }
-
-    public static void bruteForceTopKTest(Utility u, List<Tuple> tuples) {
-        for (Tuple t : tuples) {
-            double score = inner_product(u.value, t.value);
         }
     }
 }

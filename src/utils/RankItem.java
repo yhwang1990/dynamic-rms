@@ -3,9 +3,10 @@ package utils;
 import java.util.Objects;
 
 public class RankItem implements Comparable<RankItem> {
-    public int idx;
-    public double score;
-    public RankItem(int idx, double score) {
+    int idx;
+    double score;
+
+    RankItem(int idx, double score) {
         this.idx = idx;
         this.score = score;
     }

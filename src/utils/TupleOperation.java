@@ -2,5 +2,5 @@ package utils;
 
 public class TupleOperation {
     OprType oprType;
-    Tuple tuple;
+    int t_idx;
 }

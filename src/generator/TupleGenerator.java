@@ -1,27 +1,24 @@
 package generator;
 
-import utils.Tuple;
 import utils.VectorUtil;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class TupleGenerator {
     private static Random rand = new Random(0);
 
-    public static List<Tuple> uniformGenerator(int dim, int size) {
-        List<Tuple> listTuples = new ArrayList<>();
+    public static double[][] uniformGenerator(int dim, int size) {
+        double[][] tuples = new double[size][dim + 1];
 
         for (int i = 0; i < size; i++) {
-            double[] value = new double[dim + 1];
+            double[] values = new double[dim + 1];
             for (int j = 0; j < dim; j++) {
-                value[j] = Math.round(rand.nextDouble() * 100.0) / 100.0;
+                values[j] = Math.round(rand.nextDouble() * 100.0) / 100.0;
             }
-            value[dim] = Math.sqrt(dim - VectorUtil.norm2(value));
-            listTuples.add(new Tuple(i, value));
+            values[dim] = Math.sqrt(dim - VectorUtil.norm2(values));
+            tuples[i] = values;
         }
 
-        return listTuples;
+        return tuples;
     }
 }

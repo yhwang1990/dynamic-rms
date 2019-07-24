@@ -1,29 +1,26 @@
 package generator;
 
-import utils.Utility;
 import utils.VectorUtil;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class UtilityGenerator {
     private static Random rand = new Random(0);
 
-    public static List<Utility> uniformGenerator(int dim, int size) {
-        List<Utility> listUtilities = new ArrayList<>();
+    public static double[][] uniformGenerator(int dim, int size) {
+        double[][] utilities = new double[size][dim + 1];
 
         for (int i = 0; i < size; i++) {
-            double[] value = new double[dim + 1];
+            double[] values = new double[dim + 1];
             for (int j = 0; j < dim; j++) {
-                value[j] = rand.nextDouble();
+                values[j] = rand.nextDouble();
             }
-            value[dim] = 0;
-            VectorUtil.to_unit(value);
+            values[dim] = 0;
+            VectorUtil.to_unit(values);
 
-            listUtilities.add(new Utility(i, value));
+            utilities[i] = values;
         }
 
-        return listUtilities;
+        return utilities;
     }
 }

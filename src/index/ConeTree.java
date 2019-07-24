@@ -1,29 +1,33 @@
 package index;
 
+import utils.Dataset;
 import utils.NodeType;
-import utils.TopKResult;
-import utils.Utility;
 import utils.VectorUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 public class ConeTree {
 
     private ConeNode root;
     private int dim;
     private double tau;
-    private TopKResult[] topKResults;
 
-    public ConeTree(int dim, double eps, List<Utility> samples, TopKResult[] topKResults) {
+    ConeTree(int dim, double eps) {
         this.dim = dim;
         this.tau = 1.0 - eps;
-        this.topKResults = topKResults;
-        this.root = new ConeNode(null, new ArrayList<>(samples));
+
+        List<Utility> utilities = new ArrayList<>();
+        for (int i = 0; i < Dataset.UTILITIES.length; i++) {
+            utilities.add(new Utility(i, Dataset.TOP_K_RESULTS[i].k_score, Dataset.UTILITIES[i]));
+        }
+
+        this.root = new ConeNode(null, utilities);
     }
 
-    public void BFSTraverse() {
+    void BFSTraverse() {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.add(root);
         while (!queue.isEmpty()) {
@@ -59,7 +63,7 @@ public class ConeTree {
 
             for (Utility u : listUtilities) {
                 for (int i = 0; i < dim; i++) {
-                    this.centroid[i] += u.value[i];
+                    this.centroid[i] += u.values[i];
                 }
             }
             for (int i = 0; i < dim; i++) {
@@ -70,8 +74,8 @@ public class ConeTree {
             this.cosine_aperture = 1.0;
             this.min_k_score = Double.MAX_VALUE;
             for (Utility u : listUtilities) {
-                this.cosine_aperture = Math.min(VectorUtil.cosine_unit(u.value, this.centroid), this.cosine_aperture);
-                this.min_k_score = Math.min(topKResults[u.idx].k_score, min_k_score);
+                this.cosine_aperture = Math.min(VectorUtil.cosine_unit(u.values, this.centroid), this.cosine_aperture);
+                this.min_k_score = Math.min(u.k_score, min_k_score);
             }
 
             if (this.cosine_aperture < tau) {
@@ -80,8 +84,8 @@ public class ConeTree {
                 List<Utility> listLeftUtilities = new ArrayList<>();
                 List<Utility> listRightUtilities = new ArrayList<>();
                 for (Utility u : listUtilities) {
-                    double l_cosine = VectorUtil.cosine_unit(u.value, pivots[0]);
-                    double r_cosine = VectorUtil.cosine_unit(u.value, pivots[1]);
+                    double l_cosine = VectorUtil.cosine_unit(u.values, pivots[0]);
+                    double r_cosine = VectorUtil.cosine_unit(u.values, pivots[1]);
 
                     if (l_cosine >= r_cosine) {
                         listLeftUtilities.add(u);
@@ -102,23 +106,23 @@ public class ConeTree {
         private double[][] findPivots() {
             double[][] pivots = new double[2][dim];
 
-            double[] u0 = listUtilities.get(0).value;
+            double[] u0 = listUtilities.get(0).values;
 
             double l_cosine = 1.0;
             for (Utility u : listUtilities) {
-                double cosine = VectorUtil.cosine_unit(u.value, u0);
+                double cosine = VectorUtil.cosine_unit(u.values, u0);
                 if (cosine < l_cosine) {
                     l_cosine = cosine;
-                    pivots[0] = u.value;
+                    pivots[0] = u.values;
                 }
             }
 
             double r_cosine = 1.0;
             for (Utility u : listUtilities) {
-                double cosine = VectorUtil.cosine_unit(u.value, pivots[0]);
+                double cosine = VectorUtil.cosine_unit(u.values, pivots[0]);
                 if (cosine < r_cosine) {
                     r_cosine = cosine;
-                    pivots[1] = u.value;
+                    pivots[1] = u.values;
                 }
             }
 
@@ -143,6 +147,31 @@ public class ConeTree {
                 b.deleteCharAt(b.length() - 1).append("\n");
             }
             System.out.print(b.toString());
+        }
+    }
+
+    private class Utility {
+        private int idx;
+        private double k_score;
+        private double[] values;
+
+        private Utility(int idx, double k_score, double[] values) {
+            this.idx = idx;
+            this.k_score = k_score;
+            this.values = values;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Utility)) return false;
+            Utility tuple = (Utility) o;
+            return idx == tuple.idx;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(idx);
         }
     }
 }
