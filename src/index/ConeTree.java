@@ -44,7 +44,7 @@ public class ConeTree {
             ConeNode cur_node = queue.removeFirst();
             if (cur_node.nodeType == NodeType.LEAF) {
                 boolean outdated = false;
-                for (Utility u : cur_node.listUtilities) {
+                for (Utility u : cur_node.utilities) {
                     double score = VectorUtil.inner_product(t_values, u.values);
                     boolean k_updated = dualTree.topKResults[u.idx].add(u.idx, t_idx, score, operations);
                     if (k_updated) {
@@ -56,7 +56,7 @@ public class ConeTree {
                 }
                 if (outdated) {
                     cur_node.min_k_score = Double.MAX_VALUE;
-                    for (Utility u : cur_node.listUtilities) {
+                    for (Utility u : cur_node.utilities) {
                         cur_node.min_k_score = Math.min(u.k_score, cur_node.min_k_score);
                     }
                     update_min_k_score(cur_node);
@@ -79,10 +79,10 @@ public class ConeTree {
             ConeNode cur_node = queue.removeFirst();
             if (cur_node.nodeType == NodeType.LEAF) {
                 boolean outdated = false;
-                for (Utility u : cur_node.listUtilities) {
+                for (Utility u : cur_node.utilities) {
                     double score = VectorUtil.inner_product(t_values, u.values);
                     boolean k_updated = false;
-                    if (score > u.k_score) {
+                    if (score >= u.k_score) {
                         k_updated = true;
                         TopKResult newResult = dualTree.tupleIdx.approxTopKSearch(dualTree.k, dualTree.epsilon, u.values);
                         operations.add(new SetOperation(OprType.T_DEL, t_idx, u.idx));
@@ -106,7 +106,7 @@ public class ConeTree {
                 }
                 if (outdated) {
                     cur_node.min_k_score = Double.MAX_VALUE;
-                    for (Utility u : cur_node.listUtilities) {
+                    for (Utility u : cur_node.utilities) {
                         cur_node.min_k_score = Math.min(u.k_score, cur_node.min_k_score);
                     }
                     update_min_k_score(cur_node);
@@ -133,8 +133,9 @@ public class ConeTree {
     private void update_min_k_score(ConeNode node) {
         ConeNode par = node.par;
         while (par != null) {
+            double pre_k_score = par.min_k_score;
             par.min_k_score = Math.min(par.lc.min_k_score, par.rc.min_k_score);
-            if (par.min_k_score < node.min_k_score) {
+            if (par.min_k_score == pre_k_score) {
                 break;
             } else {
                 par = par.par;
@@ -148,70 +149,71 @@ public class ConeTree {
         double cosine_aperture, min_k_score;
 
         NodeType nodeType;
-        List<Utility> listUtilities;
+        List<Utility> utilities;
         ConeNode lc, rc, par;
 
-        ConeNode(ConeNode par, List<Utility> listUtilities) {
+        ConeNode(ConeNode par, List<Utility> utilities) {
             this.par = par;
             this.nodeType = NodeType.LEAF;
 
-            this.listUtilities = listUtilities;
-            this.size = listUtilities.size();
+            this.utilities = utilities;
+            this.size = utilities.size();
 
             this.lc = null;
             this.rc = null;
 
             this.centroid = new double[dim];
 
-            for (Utility u : listUtilities) {
+            for (Utility u : utilities) {
                 for (int i = 0; i < dim; i++) {
                     this.centroid[i] += u.values[i];
                 }
             }
             for (int i = 0; i < dim; i++) {
-                this.centroid[i] /= listUtilities.size();
+                this.centroid[i] /= utilities.size();
             }
             VectorUtil.to_unit(this.centroid);
 
             this.cosine_aperture = 1.0;
             this.min_k_score = Double.MAX_VALUE;
-            for (Utility u : listUtilities) {
-                this.cosine_aperture = Math.min(VectorUtil.cosine_unit(u.values, this.centroid), this.cosine_aperture);
+            for (Utility u : utilities) {
+                double cosine = VectorUtil.cosine_unit(u.values, this.centroid);
+                this.cosine_aperture = Math.min(cosine, this.cosine_aperture);
                 this.min_k_score = Math.min(u.k_score, min_k_score);
             }
 
             if (this.cosine_aperture < tau) {
                 double[][] pivots = findPivots();
 
-                List<Utility> listLeftUtilities = new ArrayList<>();
-                List<Utility> listRightUtilities = new ArrayList<>();
-                for (Utility u : listUtilities) {
+                List<Utility> leftUtilities = new ArrayList<>();
+                List<Utility> rightUtilities = new ArrayList<>();
+                for (Utility u : utilities) {
                     double l_cosine = VectorUtil.cosine_unit(u.values, pivots[0]);
                     double r_cosine = VectorUtil.cosine_unit(u.values, pivots[1]);
 
                     if (l_cosine >= r_cosine) {
-                        listLeftUtilities.add(u);
+                        leftUtilities.add(u);
                     } else {
-                        listRightUtilities.add(u);
+                        rightUtilities.add(u);
                     }
                 }
 
                 this.nodeType = NodeType.NON_LEAF;
 
-                this.lc = new ConeNode(this, listLeftUtilities);
-                this.rc = new ConeNode(this, listRightUtilities);
+                this.lc = new ConeNode(this, leftUtilities);
+                this.rc = new ConeNode(this, rightUtilities);
 
-                this.listUtilities.clear();
+                this.utilities.clear();
             }
         }
 
         private double[][] findPivots() {
             double[][] pivots = new double[2][dim];
 
-            double[] u0 = listUtilities.get(0).values;
+            double[] u0 = utilities.get(0).values;
 
             double l_cosine = 1.0;
-            for (Utility u : listUtilities) {
+            for (Utility u : utilities) {
                 double cosine = VectorUtil.cosine_unit(u.values, u0);
                 if (cosine < l_cosine) {
                     l_cosine = cosine;
@@ -220,7 +222,7 @@ public class ConeTree {
             }
 
             double r_cosine = 1.0;
-            for (Utility u : listUtilities) {
+            for (Utility u : utilities) {
                 double cosine = VectorUtil.cosine_unit(u.values, pivots[0]);
                 if (cosine < r_cosine) {
                     r_cosine = cosine;
@@ -243,7 +245,7 @@ public class ConeTree {
                 b.append("\n");
             } else {
                 b.append(" ");
-                for (Utility u : listUtilities) {
+                for (Utility u : utilities) {
                     b.append(u.idx).append(",");
                 }
                 b.deleteCharAt(b.length() - 1).append("\n");
@@ -252,7 +254,7 @@ public class ConeTree {
         }
     }
 
-    private class Utility {
+    private static class Utility {
         private int idx;
         private double k_score;
         private double[] values;

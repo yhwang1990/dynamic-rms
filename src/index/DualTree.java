@@ -11,21 +11,21 @@ import java.util.*;
 
 public class DualTree {
 
-    public int dim;
-    public int k;
-    public double epsilon;
+    int dim;
+    int k;
+    double epsilon;
 
-    public boolean[] isDeleted;
-    public double[][] tuples;
+    boolean[] isDeleted;
+    double[][] tuples;
 
-    public double[][] utilities;
+    double[][] utilities;
 
-    public TopKResult[] topKResults;
+    TopKResult[] topKResults;
 
-    public Map<Integer, HashSet<Integer>> setSystem;
+    Map<Integer, HashSet<Integer>> setSystem;
 
-    public KdTree tupleIdx;
-    public ConeTree utilityIdx;
+    KdTree tupleIdx;
+    ConeTree utilityIdx;
 
     public DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size) {
         this.dim = dim;
@@ -113,7 +113,10 @@ public class DualTree {
         }
 
         List<SetOperation> operations = new ArrayList<>();
-        tupleIdx.insert(t_idx, tuples[t_idx]);
+        boolean is_inserted = tupleIdx.insert(t_idx, tuples[t_idx]);
+        if (!is_inserted) {
+            System.err.println("Insert " + t_idx + " failed");
+        }
         utilityIdx.insert(t_idx, tuples[t_idx], operations);
         updateSetSystem(operations);
 
@@ -133,7 +136,10 @@ public class DualTree {
 
         List<SetOperation> operations = new ArrayList<>();
 
-        tupleIdx.delete(t_idx, tuples[t_idx]);
+        boolean is_deleted = tupleIdx.delete(t_idx, tuples[t_idx]);
+        if (!is_deleted) {
+            System.err.println("Delete " + t_idx + " failed");
+        }
         utilityIdx.delete(t_idx, tuples[t_idx], operations);
         updateSetSystem(operations);
 

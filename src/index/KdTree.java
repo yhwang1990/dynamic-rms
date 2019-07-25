@@ -24,13 +24,11 @@ public class KdTree {
         this.root = new KdNode(min_range, max_range, tuples);
     }
 
-    void insert(int idx, double[] values) {
-        root.insert(new Tuple(idx, values));
+    boolean insert(int idx, double[] values) {
+        return root.insert(new Tuple(idx, values));
     }
 
-    void delete(int idx, double[] values) {
-        root.delete(new Tuple(idx, values));
-    }
+    boolean delete(int idx, double[] values) { return root.delete(new Tuple(idx, values)); }
 
     TopKResult approxTopKSearch(int k, double eps, double[] u) {
         TopKResult result = new TopKResult(k, eps);
@@ -44,7 +42,7 @@ public class KdTree {
             }
         }
 
-        for (Tuple t : best_node.listTuples) {
+        for (Tuple t : best_node.tuples) {
             double score = VectorUtil.inner_product(u, t.values);
             result.update(t.idx, score);
         }
@@ -61,7 +59,7 @@ public class KdTree {
             if (cur_node.nodeType == NodeType.LEAF) {
                 if (cur_node == best_node)
                     continue;
-                for (Tuple t : cur_node.listTuples) {
+                for (Tuple t : cur_node.tuples) {
                     double score = VectorUtil.inner_product(u, t.values);
                     boolean k_score_update = result.update(t.idx, score);
 
@@ -120,14 +118,14 @@ public class KdTree {
         int size;
 
         NodeType nodeType;
-        List<Tuple> listTuples;
+        List<Tuple> tuples;
         KdNode lc, rc;
 
-        KdNode(double[] lBound, double[] hBound, List<Tuple> listTuples) {
+        KdNode(double[] lBound, double[] hBound, List<Tuple> tuples) {
             this.nodeType = NodeType.LEAF;
 
-            this.listTuples = listTuples;
-            this.size = listTuples.size();
+            this.tuples = tuples;
+            this.size = tuples.size();
 
             this.lc = null;
             this.rc = null;
@@ -137,11 +135,11 @@ public class KdTree {
 
             if (this.size > 2 * capacity) {
                 int split_coordinate = findSplitCoordinate(this.lBound, this.hBound);
-                this.listTuples.sort(new TupleComparator(split_coordinate));
-                double split_point = this.listTuples.get(this.size / 2).values[split_coordinate];
+                this.tuples.sort(new TupleComparator(split_coordinate));
+                double split_point = this.tuples.get(this.size / 2).values[split_coordinate];
 
-                List<Tuple> listLeftTuples = new ArrayList<>(this.listTuples.subList(0, this.size / 2));
-                List<Tuple> listRightTuples = new ArrayList<>(this.listTuples.subList(this.size / 2, this.size));
+                List<Tuple> leftTuples = new ArrayList<>(this.tuples.subList(0, this.size / 2));
+                List<Tuple> rightTuples = new ArrayList<>(this.tuples.subList(this.size / 2, this.size));
 
                 double[] leftLBound = new double[dim];
                 double[] leftHBound = new double[dim];
@@ -156,10 +154,10 @@ public class KdTree {
                 rightLBound[split_coordinate] = split_point;
 
                 this.nodeType = NodeType.NON_LEAF;
-                this.lc = new KdNode(leftLBound, leftHBound, listLeftTuples);
-                this.rc = new KdNode(rightLBound, rightHBound, listRightTuples);
+                this.lc = new KdNode(leftLBound, leftHBound, leftTuples);
+                this.rc = new KdNode(rightLBound, rightHBound, rightTuples);
 
-                this.listTuples.clear();
+                this.tuples.clear();
             }
         }
 
@@ -175,23 +173,23 @@ public class KdTree {
             return max_coordinate;
         }
 
-        private void insert(Tuple t) {
+        private boolean insert(Tuple t) {
             size += 1;
             if (nodeType == NodeType.NON_LEAF) {
                 if (VectorUtil.pointInRectangle(t.values, lc.lBound, lc.hBound)) {
-                    lc.insert(t);
+                    return lc.insert(t);
                 } else {
-                    rc.insert(t);
+                    return rc.insert(t);
                 }
             } else {
-                listTuples.add(t);
+                tuples.add(t);
                 if (size > 2 * capacity) {
                     int split_coordinate = findSplitCoordinate(lBound, hBound);
-                    listTuples.sort(new TupleComparator(split_coordinate));
-                    double split_point = listTuples.get(size / 2).values[split_coordinate];
+                    tuples.sort(new TupleComparator(split_coordinate));
+                    double split_point = tuples.get(size / 2).values[split_coordinate];
 
-                    List<Tuple> listLeftTuples = new ArrayList<>(listTuples.subList(0, size / 2));
-                    List<Tuple> listRightTuples = new ArrayList<>(listTuples.subList(size / 2, size));
+                    List<Tuple> leftTuples = new ArrayList<>(tuples.subList(0, size / 2));
+                    List<Tuple> rightTuples = new ArrayList<>(tuples.subList(size / 2, size));
 
                     double[] leftLBound = new double[dim];
                     double[] leftHBound = new double[dim];
@@ -206,28 +204,38 @@ public class KdTree {
                     rightLBound[split_coordinate] = split_point;
 
                     nodeType = NodeType.NON_LEAF;
-                    lc = new KdNode(leftLBound, leftHBound, listLeftTuples);
-                    rc = new KdNode(rightLBound, rightHBound, listRightTuples);
+                    lc = new KdNode(leftLBound, leftHBound, leftTuples);
+                    rc = new KdNode(rightLBound, rightHBound, rightTuples);
 
-                    listTuples.clear();
+                    tuples.clear();
                 }
+                return true;
             }
         }
 
-        private void delete(Tuple t) {
+        private boolean delete(Tuple t) {
             if (nodeType == NodeType.LEAF) {
-                size -= 1;
-                listTuples.remove(t);
+                boolean is_deleted = tuples.remove(t);
+                if (is_deleted) {
+                    size -= 1;
+                }
+                return is_deleted;
             } else if (nodeType == NodeType.NON_LEAF && lc.size > capacity && rc.size > capacity) {
-                size -= 1;
+                boolean left_deleted = false, right_deleted = false;
                 if (VectorUtil.pointInRectangle(t.values, lc.lBound, lc.hBound)) {
-                    lc.delete(t);
+                    left_deleted = lc.delete(t);
                 }
                 if (VectorUtil.pointInRectangle(t.values, rc.lBound, rc.hBound)) {
-                    rc.delete(t);
+                    right_deleted = rc.delete(t);
+                }
+                if (left_deleted || right_deleted) {
+                    size -= 1;
+                    return true;
+                } else {
+                    return false;
                 }
             } else {
-                listTuples.clear();
+                tuples.clear();
                 LinkedList<KdNode> queue = new LinkedList<>();
                 queue.addFirst(lc);
                 queue.addFirst(rc);
@@ -237,12 +245,14 @@ public class KdTree {
                         queue.addFirst(cur.lc);
                         queue.addFirst(cur.rc);
                     } else {
-                        listTuples.addAll(cur.listTuples);
+                        tuples.addAll(cur.tuples);
                     }
                 }
 
-                listTuples.remove(t);
-                size = listTuples.size();
+                boolean is_deleted = tuples.remove(t);
+                if (is_deleted) {
+                    size -= 1;
+                }
 
                 if (size <= 2 * capacity) {
                     nodeType = NodeType.LEAF;
@@ -250,11 +260,11 @@ public class KdTree {
                     rc = null;
                 } else {
                     int split_coordinate = findSplitCoordinate(lBound, hBound);
-                    listTuples.sort(new TupleComparator(split_coordinate));
-                    double split_point = listTuples.get(size / 2).values[split_coordinate];
+                    tuples.sort(new TupleComparator(split_coordinate));
+                    double split_point = tuples.get(size / 2).values[split_coordinate];
 
-                    List<Tuple> listLeftTuples = new ArrayList<>(listTuples.subList(0, size / 2));
-                    List<Tuple> listRightTuples = new ArrayList<>(listTuples.subList(size / 2, size));
+                    List<Tuple> listLeftTuples = new ArrayList<>(tuples.subList(0, size / 2));
+                    List<Tuple> listRightTuples = new ArrayList<>(tuples.subList(size / 2, size));
 
                     double[] leftLBound = new double[dim];
                     double[] leftHBound = new double[dim];
@@ -272,8 +282,9 @@ public class KdTree {
                     lc = new KdNode(leftLBound, leftHBound, listLeftTuples);
                     rc = new KdNode(rightLBound, rightHBound, listRightTuples);
 
-                    listTuples.clear();
+                    tuples.clear();
                 }
+                return is_deleted;
             }
         }
 
@@ -288,7 +299,7 @@ public class KdTree {
                 b.append("\n");
             } else {
                 b.append(" ");
-                for (Tuple t : listTuples) {
+                for (Tuple t : tuples) {
                     b.append(t.idx).append(",");
                 }
                 b.deleteCharAt(b.length() - 1).append("\n");
@@ -297,7 +308,7 @@ public class KdTree {
         }
     }
 
-    private class Tuple {
+    private static class Tuple {
         private int idx;
         private double[] values;
 
