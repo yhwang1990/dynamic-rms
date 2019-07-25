@@ -16,7 +16,7 @@ public class KdTree {
 
         List<Tuple> tuples = new ArrayList<>();
         for (int i = 0; i < dualTree.tuples.length; i++) {
-            if (! dualTree.isDeleted[i]) {
+            if (!dualTree.isDeleted[i]) {
                 tuples.add(new Tuple(i, dualTree.tuples[i]));
             }
         }
@@ -81,7 +81,7 @@ public class KdTree {
             }
         }
 
-        result.refreshResults();
+        result.initResults();
 
         return result;
     }
@@ -99,7 +99,7 @@ public class KdTree {
         }
     }
 
-    class RandNode implements Comparable<RandNode> {
+    private class RandNode implements Comparable<RandNode> {
         KdNode node;
         double dist2;
 
@@ -114,7 +114,7 @@ public class KdTree {
         }
     }
 
-    class KdNode {
+    private class KdNode {
         double[] lBound;
         double[] hBound;
         int size;

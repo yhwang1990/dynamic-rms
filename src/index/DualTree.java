@@ -3,6 +3,7 @@ package index;
 import generator.TupleGenerator;
 import generator.UtilityGenerator;
 
+import utils.OprType;
 import utils.SetOperation;
 import utils.TopKResult;
 
@@ -33,27 +34,24 @@ public class DualTree {
 
         initializeDataset(data_size, init_size, sample_size);
 
-        double[] min_range = new double[this.dim + 1];
-        double[] max_range = new double[this.dim + 1];
+        double[] min = new double[this.dim + 1];
+        double[] max = new double[this.dim + 1];
 
         for (int i = 0; i < this.dim; i++) {
-            min_range[i] = 0;
-            max_range[i] = 1;
+            min[i] = 0;
+            max[i] = 1;
         }
-        min_range[this.dim] = 0;
-        max_range[this.dim] = Math.sqrt(dim);
+        min[this.dim] = 0;
+        max[this.dim] = Math.sqrt(dim);
 
-        this.tupleIdx = new KdTree(this.dim + 1, 10, min_range, max_range, this);
+        this.tupleIdx = new KdTree(this.dim + 1, 2, min, max, this);
 
-        long t1 = System.nanoTime();
         this.topKResults = new TopKResult[this.utilities.length];
         for (int i = 0; i< this.utilities.length; i++) {
             this.topKResults[i] = this.tupleIdx.approxTopKSearch(this.k, this.epsilon, this.utilities[i]);
         }
-        long t2 = System.nanoTime();
-        System.out.println("k-d tree time = " + ((t2 - t1) / 1e9) + "s");
 
-        this.utilityIdx = new ConeTree(this.dim + 1, 0.01, this);
+        this.utilityIdx = new ConeTree(this.dim + 1, 0.99, this);
 
         constructSetSystem();
     }
@@ -85,6 +83,24 @@ public class DualTree {
         }
     }
 
+    private void updateSetSystem(List<SetOperation> operations) {
+        for (SetOperation opr : operations) {
+            if (opr.oprType == OprType.T_ADD || opr.oprType == OprType.S_ADD) {
+                if (! setSystem.containsKey(opr.t_idx)) {
+                    setSystem.put(opr.t_idx, new HashSet<>());
+                    setSystem.get(opr.t_idx).add(opr.u_idx);
+                } else {
+                    setSystem.get(opr.t_idx).add(opr.u_idx);
+                }
+            } else if (opr.oprType == OprType.T_DEL || opr.oprType == OprType.S_DEL) {
+                setSystem.get(opr.t_idx).remove(opr.u_idx);
+                if (setSystem.get(opr.t_idx).isEmpty()) {
+                    setSystem.remove(opr.t_idx);
+                }
+            }
+        }
+    }
+
     public List<SetOperation> insert(int t_idx) {
         boolean isUpdated = false;
         if (isDeleted[t_idx]) {
@@ -97,9 +113,9 @@ public class DualTree {
         }
 
         List<SetOperation> operations = new ArrayList<>();
-
         tupleIdx.insert(t_idx, tuples[t_idx]);
         utilityIdx.insert(t_idx, tuples[t_idx], operations);
+        updateSetSystem(operations);
 
         return operations;
     }
@@ -116,7 +132,10 @@ public class DualTree {
         }
 
         List<SetOperation> operations = new ArrayList<>();
-        List<Integer> affUtilities = new ArrayList<>();
+
+        tupleIdx.delete(t_idx, tuples[t_idx]);
+        utilityIdx.delete(t_idx, tuples[t_idx], operations);
+        updateSetSystem(operations);
 
         return operations;
     }

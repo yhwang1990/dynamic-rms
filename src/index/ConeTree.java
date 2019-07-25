@@ -1,13 +1,8 @@
 package index;
 
-import utils.NodeType;
-import utils.SetOperation;
-import utils.VectorUtil;
+import utils.*;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ConeTree {
 
@@ -16,9 +11,9 @@ public class ConeTree {
     private int dim;
     private double tau;
 
-    ConeTree(int dim, double eps, DualTree dualTree) {
+    ConeTree(int dim, double tau, DualTree dualTree) {
         this.dim = dim;
-        this.tau = 1.0 - eps;
+        this.tau = tau;
         this.dualTree = dualTree;
 
         List<Utility> utilities = new ArrayList<>();
@@ -42,7 +37,7 @@ public class ConeTree {
         }
     }
 
-    public void insert(int t_idx, double[] t_values, List<SetOperation> operations) {
+    void insert(int t_idx, double[] t_values, List<SetOperation> operations) {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.addLast(root);
         while (!queue.isEmpty()) {
@@ -64,23 +59,64 @@ public class ConeTree {
                     for (Utility u : cur_node.listUtilities) {
                         cur_node.min_k_score = Math.min(u.k_score, cur_node.min_k_score);
                     }
-
-                    ConeNode parNode = cur_node.par;
-                    while (parNode != null) {
-                        parNode.min_k_score = Math.min(parNode.lc.min_k_score, parNode.rc.min_k_score);
-                        if (parNode.min_k_score < cur_node.min_k_score) {
-                            break;
-                        } else {
-                            parNode = parNode.par;
-                        }
-                    }
+                    update_min_k_score(cur_node);
                 }
             } else {
                 if (max_inner_product(t_values, cur_node.lc) >= (1 - dualTree.epsilon) * cur_node.lc.min_k_score) {
-                    queue.addFirst(cur_node.lc);
+                    queue.addLast(cur_node.lc);
                 }
                 if (max_inner_product(t_values, cur_node.rc) >= (1 - dualTree.epsilon) * cur_node.rc.min_k_score) {
-                    queue.addFirst(cur_node.rc);
+                    queue.addLast(cur_node.rc);
+                }
+            }
+        }
+    }
+
+    void delete(int t_idx, double[] t_values, List<SetOperation> operations) {
+        LinkedList<ConeNode> queue = new LinkedList<>();
+        queue.addLast(root);
+        while (!queue.isEmpty()) {
+            ConeNode cur_node = queue.removeFirst();
+            if (cur_node.nodeType == NodeType.LEAF) {
+                boolean outdated = false;
+                for (Utility u : cur_node.listUtilities) {
+                    double score = VectorUtil.inner_product(t_values, u.values);
+                    boolean k_updated = false;
+                    if (score > u.k_score) {
+                        k_updated = true;
+                        TopKResult newResult = dualTree.tupleIdx.approxTopKSearch(dualTree.k, dualTree.epsilon, u.values);
+                        operations.add(new SetOperation(OprType.T_DEL, t_idx, u.idx));
+                        TopKResult oldResult = dualTree.topKResults[u.idx];
+                        for (int idx : newResult.results) {
+                            if (!oldResult.results.contains(idx)) {
+                                operations.add(new SetOperation(OprType.S_ADD, idx, u.idx));
+                            }
+                        }
+                        dualTree.topKResults[u.idx] = newResult;
+                    } else if (score >= (1.0 - dualTree.epsilon) * u.k_score) {
+                        dualTree.topKResults[u.idx].delete(u.idx, t_idx, score, operations);
+                    }
+
+                    if (k_updated) {
+                        if (cur_node.min_k_score == u.k_score) {
+                            outdated = true;
+                        }
+                        u.k_score = dualTree.topKResults[u.idx].k_score;
+                    }
+                }
+                if (outdated) {
+                    cur_node.min_k_score = Double.MAX_VALUE;
+                    for (Utility u : cur_node.listUtilities) {
+                        cur_node.min_k_score = Math.min(u.k_score, cur_node.min_k_score);
+                    }
+                    update_min_k_score(cur_node);
+                }
+            } else {
+                if (max_inner_product(t_values, cur_node.lc) >= (1 - dualTree.epsilon) * cur_node.lc.min_k_score) {
+                    queue.addLast(cur_node.lc);
+                }
+                if (max_inner_product(t_values, cur_node.rc) >= (1 - dualTree.epsilon) * cur_node.rc.min_k_score) {
+                    queue.addLast(cur_node.rc);
                 }
             }
         }
@@ -94,7 +130,19 @@ public class ConeTree {
             return VectorUtil.norm(t) * VectorUtil.cosine_diff(cosine, node.cosine_aperture);
     }
 
-    class ConeNode {
+    private void update_min_k_score(ConeNode node) {
+        ConeNode par = node.par;
+        while (par != null) {
+            par.min_k_score = Math.min(par.lc.min_k_score, par.rc.min_k_score);
+            if (par.min_k_score < node.min_k_score) {
+                break;
+            } else {
+                par = par.par;
+            }
+        }
+    }
+
+    private class ConeNode {
         int size;
         double[] centroid;
         double cosine_aperture, min_k_score;

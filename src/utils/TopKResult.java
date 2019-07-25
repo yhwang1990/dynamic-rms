@@ -1,8 +1,6 @@
 package utils;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class TopKResult {
 
@@ -17,6 +15,7 @@ public class TopKResult {
         this.k = k;
         this.eps = eps;
         this.k_score = 0.0;
+
         this.results = new HashSet<>();
         this.exact_result = new PriorityQueue<>();
         this.approximate_result = new PriorityQueue<>();
@@ -55,7 +54,7 @@ public class TopKResult {
         if (score > k_score) {
             exact_result.offer(new RankItem(t_idx, score));
             results.add(t_idx);
-            operations.add(new SetOperation(OprType.S_ADD, t_idx, u_idx));
+            operations.add(new SetOperation(OprType.T_ADD, t_idx, u_idx));
             k_updated = true;
 
             if (! exact_result.isEmpty() && exact_result.size() > k) {
@@ -80,13 +79,19 @@ public class TopKResult {
         } else if (score >= (1 - eps) * k_score) {
             approximate_result.offer(new RankItem(t_idx, score));
             results.add(t_idx);
-            operations.add(new SetOperation(OprType.S_ADD, t_idx, u_idx));
+            operations.add(new SetOperation(OprType.T_ADD, t_idx, u_idx));
         }
 
         return k_updated;
     }
 
-    public void refreshResults() {
+    public void delete(int u_idx, int t_idx, double score, List<SetOperation> operations) {
+        approximate_result.remove(new RankItem(t_idx, score));
+        results.remove(t_idx);
+        operations.add(new SetOperation(OprType.T_DEL, t_idx, u_idx));
+    }
+
+    public void initResults() {
         results.clear();
 
         for(RankItem item : exact_result) {
