@@ -83,11 +83,11 @@ public class VectorUtil {
         return (1.0 + dim - dist2) / 2.0;
     }
 
-    public static double product2dist(int dim, double product) {
+    public static double prod2dist(int dim, double product) {
         return 1.0 + dim - 2.0 * product;
     }
 
-    public static boolean pointInRectangle(double[] p, double[] min, double[] max) {
+    public static boolean pointInRect(double[] p, double[] min, double[] max) {
         for (int i = 0; i < p.length; i++) {
             if (p[i] < min[i] || p[i] > max[i]) {
                 return false;
@@ -96,7 +96,7 @@ public class VectorUtil {
         return true;
     }
 
-    public static double dist2(double[] p, double[] min, double[] max) {
+    public static double dist2Rect(double[] p, double[] min, double[] max) {
         double sum = 0.0;
         for (int i = 0; i < p.length; i++) {
             if (p[i] < min[i]) {

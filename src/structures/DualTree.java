@@ -50,9 +50,7 @@ public class DualTree {
         for (int i = 0; i< this.utilities.length; i++) {
             this.results[i] = this.tIdx.approxTopKSearch(this.k, this.eps, this.utilities[i]);
         }
-
         this.uIdx = new ConeTree(this.dim + 1, 0.99, this);
-
         constructSetSystem();
     }
 

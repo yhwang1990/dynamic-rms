@@ -35,7 +35,7 @@ public class KdTree {
 
         KdNode best_node = root;
         while (best_node.nodeType != NodeType.LEAF) {
-            if (VectorUtil.pointInRectangle(u, best_node.lc.lBound, best_node.lc.hBound)) {
+            if (VectorUtil.pointInRect(u, best_node.lc.lBound, best_node.lc.hBound)) {
                 best_node = best_node.lc;
             } else {
                 best_node = best_node.rc;
@@ -49,7 +49,7 @@ public class KdTree {
 
         double min_dist = Double.MAX_VALUE;
         if (result.k_score > 0) {
-            min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
+            min_dist = VectorUtil.prod2dist(dim - 1, (1 - eps) * result.k_score);
         }
 
         PriorityQueue<RandNode> queue = new PriorityQueue<>();
@@ -64,15 +64,15 @@ public class KdTree {
                     boolean k_score_update = result.update(t.idx, score);
 
                     if (k_score_update) {
-                        min_dist = VectorUtil.product2dist(dim - 1, (1 - eps) * result.k_score);
+                        min_dist = VectorUtil.prod2dist(dim - 1, (1 - eps) * result.k_score);
                     }
                 }
             } else {
-                double l_dist2 = VectorUtil.dist2(u, cur_node.lc.lBound, cur_node.lc.hBound);
+                double l_dist2 = VectorUtil.dist2Rect(u, cur_node.lc.lBound, cur_node.lc.hBound);
                 if (l_dist2 <= min_dist) {
                     queue.offer(new RandNode(cur_node.lc, l_dist2));
                 }
-                double r_dist2 = VectorUtil.dist2(u, cur_node.rc.lBound, cur_node.rc.hBound);
+                double r_dist2 = VectorUtil.dist2Rect(u, cur_node.rc.lBound, cur_node.rc.hBound);
                 if (r_dist2 <= min_dist) {
                     queue.offer(new RandNode(cur_node.rc, r_dist2));
                 }
@@ -176,7 +176,7 @@ public class KdTree {
         private boolean insert(Tuple t) {
             size += 1;
             if (nodeType == NodeType.NON_LEAF) {
-                if (VectorUtil.pointInRectangle(t.values, lc.lBound, lc.hBound)) {
+                if (VectorUtil.pointInRect(t.values, lc.lBound, lc.hBound)) {
                     return lc.insert(t);
                 } else {
                     return rc.insert(t);
@@ -222,10 +222,10 @@ public class KdTree {
                 return is_deleted;
             } else if (nodeType == NodeType.NON_LEAF && lc.size > capacity && rc.size > capacity) {
                 boolean left_deleted = false, right_deleted = false;
-                if (VectorUtil.pointInRectangle(t.values, lc.lBound, lc.hBound)) {
+                if (VectorUtil.pointInRect(t.values, lc.lBound, lc.hBound)) {
                     left_deleted = lc.delete(t);
                 }
-                if (VectorUtil.pointInRectangle(t.values, rc.lBound, rc.hBound)) {
+                if (VectorUtil.pointInRect(t.values, rc.lBound, rc.hBound)) {
                     right_deleted = rc.delete(t);
                 }
                 if (left_deleted || right_deleted) {
