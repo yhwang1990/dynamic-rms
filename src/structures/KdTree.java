@@ -1,4 +1,4 @@
-package index;
+package structures;
 
 import utils.*;
 
@@ -331,7 +331,7 @@ public class KdTree {
         }
     }
 
-    private class TupleComparator implements Comparator<Tuple> {
+    private static class TupleComparator implements Comparator<Tuple> {
 
         private int coordinate;
 

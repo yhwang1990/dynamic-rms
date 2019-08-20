@@ -1,7 +1,7 @@
-package index;
+package structures;
 
-import generator.TupleGenerator;
-import generator.UtilityGenerator;
+import generators.TupleGenerator;
+import generators.UtilityGenerator;
 
 import utils.OprType;
 import utils.SetOperation;
@@ -13,24 +13,24 @@ public class DualTree {
 
     int dim;
     int k;
-    double epsilon;
+    double eps;
 
     boolean[] isDeleted;
     double[][] tuples;
 
     double[][] utilities;
 
-    TopKResult[] topKResults;
+    TopKResult[] results;
 
-    Map<Integer, HashSet<Integer>> setSystem;
+    Map<Integer, HashSet<Integer>> sets;
 
-    KdTree tupleIdx;
-    ConeTree utilityIdx;
+    KdTree tIdx;
+    ConeTree uIdx;
 
     public DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size) {
         this.dim = dim;
         this.k = k;
-        this.epsilon = eps;
+        this.eps = eps;
 
         initializeDataset(data_size, init_size, sample_size);
 
@@ -44,14 +44,14 @@ public class DualTree {
         min[this.dim] = 0;
         max[this.dim] = Math.sqrt(dim);
 
-        this.tupleIdx = new KdTree(this.dim + 1, 2, min, max, this);
+        this.tIdx = new KdTree(this.dim + 1, 2, min, max, this);
 
-        this.topKResults = new TopKResult[this.utilities.length];
+        this.results = new TopKResult[this.utilities.length];
         for (int i = 0; i< this.utilities.length; i++) {
-            this.topKResults[i] = this.tupleIdx.approxTopKSearch(this.k, this.epsilon, this.utilities[i]);
+            this.results[i] = this.tIdx.approxTopKSearch(this.k, this.eps, this.utilities[i]);
         }
 
-        this.utilityIdx = new ConeTree(this.dim + 1, 0.99, this);
+        this.uIdx = new ConeTree(this.dim + 1, 0.99, this);
 
         constructSetSystem();
     }
@@ -70,14 +70,14 @@ public class DualTree {
     }
 
     private void constructSetSystem() {
-        setSystem = new HashMap<>();
-        for (int i = 0; i < topKResults.length; i++) {
-            for (int t_idx : topKResults[i].results) {
-                if (! setSystem.containsKey(t_idx)) {
-                    setSystem.put(t_idx, new HashSet<>());
-                    setSystem.get(t_idx).add(i);
+        sets = new HashMap<>();
+        for (int i = 0; i < results.length; i++) {
+            for (int t_idx : results[i].results) {
+                if (! sets.containsKey(t_idx)) {
+                    sets.put(t_idx, new HashSet<>());
+                    sets.get(t_idx).add(i);
                 } else {
-                    setSystem.get(t_idx).add(i);
+                    sets.get(t_idx).add(i);
                 }
             }
         }
@@ -86,16 +86,16 @@ public class DualTree {
     private void updateSetSystem(List<SetOperation> operations) {
         for (SetOperation opr : operations) {
             if (opr.oprType == OprType.T_ADD || opr.oprType == OprType.S_ADD) {
-                if (! setSystem.containsKey(opr.t_idx)) {
-                    setSystem.put(opr.t_idx, new HashSet<>());
-                    setSystem.get(opr.t_idx).add(opr.u_idx);
+                if (! sets.containsKey(opr.t_idx)) {
+                    sets.put(opr.t_idx, new HashSet<>());
+                    sets.get(opr.t_idx).add(opr.u_idx);
                 } else {
-                    setSystem.get(opr.t_idx).add(opr.u_idx);
+                    sets.get(opr.t_idx).add(opr.u_idx);
                 }
             } else if (opr.oprType == OprType.T_DEL || opr.oprType == OprType.S_DEL) {
-                setSystem.get(opr.t_idx).remove(opr.u_idx);
-                if (setSystem.get(opr.t_idx).isEmpty()) {
-                    setSystem.remove(opr.t_idx);
+                sets.get(opr.t_idx).remove(opr.u_idx);
+                if (sets.get(opr.t_idx).isEmpty()) {
+                    sets.remove(opr.t_idx);
                 }
             }
         }
@@ -113,11 +113,11 @@ public class DualTree {
         }
 
         List<SetOperation> operations = new ArrayList<>();
-        boolean is_inserted = tupleIdx.insert(t_idx, tuples[t_idx]);
+        boolean is_inserted = tIdx.insert(t_idx, tuples[t_idx]);
         if (!is_inserted) {
             System.err.println("Insert " + t_idx + " failed");
         }
-        utilityIdx.insert(t_idx, tuples[t_idx], operations);
+        uIdx.insert(t_idx, tuples[t_idx], operations);
         updateSetSystem(operations);
 
         return operations;
@@ -136,11 +136,11 @@ public class DualTree {
 
         List<SetOperation> operations = new ArrayList<>();
 
-        boolean is_deleted = tupleIdx.delete(t_idx, tuples[t_idx]);
+        boolean is_deleted = tIdx.delete(t_idx, tuples[t_idx]);
         if (!is_deleted) {
             System.err.println("Delete " + t_idx + " failed");
         }
-        utilityIdx.delete(t_idx, tuples[t_idx], operations);
+        uIdx.delete(t_idx, tuples[t_idx], operations);
         updateSetSystem(operations);
 
         return operations;

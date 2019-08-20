@@ -1,4 +1,4 @@
-package cover;
+package structures;
 
 public class DynamicSetCover {
 }
