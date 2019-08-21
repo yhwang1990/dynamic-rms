@@ -11,21 +11,23 @@ import java.util.*;
 
 public class DualTree {
 
-    int dim;
+    public int dim;
     int k;
     double eps;
 
     boolean[] isDeleted;
-    double[][] tuples;
+    public double[][] tuples;
 
-    double[][] utilities;
+    public double[][] utilities;
 
-    TopKResult[] results;
+    public TopKResult[] results;
 
-    Map<Integer, HashSet<Integer>> sets;
+    public Map<Integer, HashSet<Integer>> sets;
 
-    KdTree tIdx;
-    ConeTree uIdx;
+    public KdTree tIdx;
+    public ConeTree uIdx;
+
+    public SetCover setCover;
 
     public DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size) {
         this.dim = dim;
@@ -52,6 +54,9 @@ public class DualTree {
         }
         this.uIdx = new ConeTree(this.dim + 1, 0.99, this);
         constructSetSystem();
+
+        this.setCover = new SetCover(this);
+        this.setCover.constructSetCover();
     }
 
     private void initializeDataset(int data_size, int init_size, int sample_size) {
