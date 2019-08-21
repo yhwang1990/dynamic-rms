@@ -56,7 +56,7 @@ public class DualTree {
         constructSetSystem();
 
         this.setCover = new SetCover(this);
-        this.setCover.constructSetCover();
+        this.setCover.greedySetCover();
     }
 
     private void initializeDataset(int data_size, int init_size, int sample_size) {

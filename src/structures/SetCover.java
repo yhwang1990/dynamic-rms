@@ -1,5 +1,7 @@
 package structures;
 
+import utils.SetOperation;
+
 import java.util.*;
 
 public class SetCover {
@@ -25,7 +27,7 @@ public class SetCover {
         this.elemInfo = new ElemInfo[MAX_SIZE];
     }
 
-    public void constructSetCover() {
+    public void greedySetCover() {
         int cov_size = 0;
         ArrayList<RankSet> rankSetList = new ArrayList<>(dualTree.sets.size());
         for (Map.Entry<Integer, HashSet<Integer>> entry : dualTree.sets.entrySet()) {
@@ -60,6 +62,18 @@ public class SetCover {
 
             cov_size += setInfo.cov.size();
         }
+    }
+
+    public void update(SetOperation opr) {
+
+    }
+
+    public void insertTuple(int t_idx) {
+
+    }
+
+    public void deleteTuple(int t_idx) {
+
     }
 
     public void print() {
