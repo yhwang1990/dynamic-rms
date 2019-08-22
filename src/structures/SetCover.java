@@ -3,6 +3,7 @@ package structures;
 import utils.Data;
 import utils.OprType;
 import utils.SetOperation;
+import utils.TupleOperation;
 
 import java.util.*;
 
@@ -12,7 +13,9 @@ public class SetCover {
     public Map<Integer, HashSet<Integer>> sets;
 
     private DensityLevel[] levels;
-    private ElemInfo[] elemInfo;
+
+    private int[] utilityAssign;
+    private int[] utilityLevel;
 
     Map<Integer, SetInfo> sol;
 
@@ -31,7 +34,9 @@ public class SetCover {
 
         int maxLevel = (int) (Math.log(Data.SAMPLE_SIZE) / Math.log(SCALE_FACTOR)) + 1;
         this.levels = new DensityLevel[maxLevel];
-        this.elemInfo = new ElemInfo[Data.SAMPLE_SIZE];
+
+        this.utilityAssign = new int[Data.SAMPLE_SIZE];
+        this.utilityLevel = new int[Data.SAMPLE_SIZE];
 
         this.sol = new HashMap<>();
         greedySetCover();
@@ -49,9 +54,9 @@ public class SetCover {
             SetInfo setInfo = new SetInfo(bestSet);
             sol.put(bestSet.idx, setInfo);
 
-            for (int elem_idx : setInfo.cov) {
-                elemInfo[elem_idx] = new ElemInfo(bestSet.idx);
-                elemInfo[elem_idx].covSets.addAll(Data.RESULTS[elem_idx].results);
+            for (int u_idx : setInfo.cov) {
+                utilityAssign[u_idx] = bestSet.idx;
+                utilityLevel[u_idx] = setInfo.level_idx;
             }
 
             if (levels[setInfo.level_idx] == null) {
@@ -74,16 +79,22 @@ public class SetCover {
         }
     }
 
-    public void update(SetOperation opr) {
-
-    }
-
-    public void insertTuple(int t_idx) {
-
-    }
-
-    public void deleteTuple(int t_idx) {
-
+    public void update(TupleOperation t_opr, List<SetOperation> s_oprs) {
+        for (SetOperation s_opr : s_oprs) {
+            if (s_opr.oprType == OprType.T_ADD || s_opr.oprType == OprType.S_ADD) {
+                if (! sets.containsKey(s_opr.t_idx)) {
+                    sets.put(s_opr.t_idx, new HashSet<>());
+                    sets.get(s_opr.t_idx).add(s_opr.u_idx);
+                } else {
+                    sets.get(s_opr.t_idx).add(s_opr.u_idx);
+                }
+            } else if (s_opr.oprType == OprType.T_DEL || s_opr.oprType == OprType.S_DEL) {
+                sets.get(s_opr.t_idx).remove(s_opr.u_idx);
+                if (sets.get(s_opr.t_idx).isEmpty()) {
+                    sets.remove(s_opr.t_idx);
+                }
+            }
+        }
     }
 
     public void print() {
@@ -105,24 +116,6 @@ public class SetCover {
                     System.out.print(entry.getKey() + "," + entry.getValue() + " ");
                 }
                 System.out.println();
-            }
-        }
-    }
-
-    private void updateSetSystem(List<SetOperation> operations) {
-        for (SetOperation opr : operations) {
-            if (opr.oprType == OprType.T_ADD || opr.oprType == OprType.S_ADD) {
-                if (! sets.containsKey(opr.t_idx)) {
-                    sets.put(opr.t_idx, new HashSet<>());
-                    sets.get(opr.t_idx).add(opr.u_idx);
-                } else {
-                    sets.get(opr.t_idx).add(opr.u_idx);
-                }
-            } else if (opr.oprType == OprType.T_DEL || opr.oprType == OprType.S_DEL) {
-                sets.get(opr.t_idx).remove(opr.u_idx);
-                if (sets.get(opr.t_idx).isEmpty()) {
-                    sets.remove(opr.t_idx);
-                }
             }
         }
     }
