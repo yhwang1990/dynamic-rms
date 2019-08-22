@@ -1,39 +1,49 @@
 package structures;
 
+import utils.Data;
+import utils.OprType;
 import utils.SetOperation;
 
 import java.util.*;
 
 public class SetCover {
     private static int SCALE_FACTOR = 2;
-    private static int MAX_SIZE;
 
-    private DualTree dualTree;
+    public Map<Integer, HashSet<Integer>> sets;
 
     private DensityLevel[] levels;
     private ElemInfo[] elemInfo;
 
     Map<Integer, SetInfo> sol;
 
-    public SetCover(DualTree dualTree) {
-        this.dualTree = dualTree;
-        MAX_SIZE = this.dualTree.utilities.length;
+    public SetCover() {
+        this.sets = new HashMap<>();
+        for (int i = 0; i < Data.SAMPLE_SIZE; i++) {
+            for (int t_idx : Data.RESULTS[i].results) {
+                if (! this.sets.containsKey(t_idx)) {
+                    this.sets.put(t_idx, new HashSet<>());
+                    this.sets.get(t_idx).add(i);
+                } else {
+                    this.sets.get(t_idx).add(i);
+                }
+            }
+        }
+
+        int maxLevel = (int) (Math.log(Data.SAMPLE_SIZE) / Math.log(SCALE_FACTOR)) + 1;
+        this.levels = new DensityLevel[maxLevel];
+        this.elemInfo = new ElemInfo[Data.SAMPLE_SIZE];
 
         this.sol = new HashMap<>();
-
-        int maxLevel = (int) (Math.log(MAX_SIZE) / Math.log(SCALE_FACTOR)) + 1;
-        this.levels = new DensityLevel[maxLevel];
-
-        this.elemInfo = new ElemInfo[MAX_SIZE];
+        greedySetCover();
     }
 
-    public void greedySetCover() {
+    private void greedySetCover() {
         int cov_size = 0;
-        ArrayList<RankSet> rankSetList = new ArrayList<>(dualTree.sets.size());
-        for (Map.Entry<Integer, HashSet<Integer>> entry : dualTree.sets.entrySet()) {
+        ArrayList<RankSet> rankSetList = new ArrayList<>(sets.size());
+        for (Map.Entry<Integer, HashSet<Integer>> entry : sets.entrySet()) {
             rankSetList.add(new RankSet(entry.getKey(), entry.getValue()));
         }
-        while (cov_size < MAX_SIZE) {
+        while (cov_size < Data.SAMPLE_SIZE) {
             rankSetList.sort(new RankSetComparator());
             RankSet bestSet = rankSetList.get(0);
             SetInfo setInfo = new SetInfo(bestSet);
@@ -41,7 +51,7 @@ public class SetCover {
 
             for (int elem_idx : setInfo.cov) {
                 elemInfo[elem_idx] = new ElemInfo(bestSet.idx);
-                elemInfo[elem_idx].covSets.addAll(dualTree.results[elem_idx].results);
+                elemInfo[elem_idx].covSets.addAll(Data.RESULTS[elem_idx].results);
             }
 
             if (levels[setInfo.level_idx] == null) {
@@ -95,6 +105,24 @@ public class SetCover {
                     System.out.print(entry.getKey() + "," + entry.getValue() + " ");
                 }
                 System.out.println();
+            }
+        }
+    }
+
+    private void updateSetSystem(List<SetOperation> operations) {
+        for (SetOperation opr : operations) {
+            if (opr.oprType == OprType.T_ADD || opr.oprType == OprType.S_ADD) {
+                if (! sets.containsKey(opr.t_idx)) {
+                    sets.put(opr.t_idx, new HashSet<>());
+                    sets.get(opr.t_idx).add(opr.u_idx);
+                } else {
+                    sets.get(opr.t_idx).add(opr.u_idx);
+                }
+            } else if (opr.oprType == OprType.T_DEL || opr.oprType == OprType.S_DEL) {
+                sets.get(opr.t_idx).remove(opr.u_idx);
+                if (sets.get(opr.t_idx).isEmpty()) {
+                    sets.remove(opr.t_idx);
+                }
             }
         }
     }

@@ -12,13 +12,13 @@ public class ConeTree {
     private double tau;
 
     ConeTree(int dim, double tau, DualTree dualTree) {
+        this.dualTree = dualTree;
         this.dim = dim;
         this.tau = tau;
-        this.dualTree = dualTree;
 
         List<Utility> utilities = new ArrayList<>();
-        for (int i = 0; i < this.dualTree.utilities.length; i++) {
-            utilities.add(new Utility(i, this.dualTree.results[i].k_score, this.dualTree.utilities[i]));
+        for (int i = 0; i < Data.SAMPLE_SIZE; i++) {
+            utilities.add(new Utility(i, Data.RESULTS[i].k_score, Data.UTILITIES[i]));
         }
 
         this.root = new ConeNode(null, utilities);
@@ -46,12 +46,12 @@ public class ConeTree {
                 boolean outdated = false;
                 for (Utility u : cur_node.utilities) {
                     double score = VectorUtil.inner_product(t_values, u.values);
-                    boolean k_updated = dualTree.results[u.idx].add(u.idx, t_idx, score, operations);
+                    boolean k_updated = Data.RESULTS[u.idx].add(u.idx, t_idx, score, operations);
                     if (k_updated) {
                         if (cur_node.min_k_score == u.k_score) {
                             outdated = true;
                         }
-                        u.k_score = dualTree.results[u.idx].k_score;
+                        u.k_score = Data.RESULTS[u.idx].k_score;
                     }
                 }
                 if (outdated) {
@@ -62,10 +62,10 @@ public class ConeTree {
                     update_min_k_score(cur_node);
                 }
             } else {
-                if (max_inner_product(t_values, cur_node.lc) >= (1 - dualTree.eps) * cur_node.lc.min_k_score) {
+                if (max_inner_product(t_values, cur_node.lc) >= (1 - Data.EPS) * cur_node.lc.min_k_score) {
                     queue.addLast(cur_node.lc);
                 }
-                if (max_inner_product(t_values, cur_node.rc) >= (1 - dualTree.eps) * cur_node.rc.min_k_score) {
+                if (max_inner_product(t_values, cur_node.rc) >= (1 - Data.EPS) * cur_node.rc.min_k_score) {
                     queue.addLast(cur_node.rc);
                 }
             }
@@ -84,24 +84,24 @@ public class ConeTree {
                     boolean k_updated = false;
                     if (score >= u.k_score) {
                         k_updated = true;
-                        TopKResult newResult = dualTree.tIdx.approxTopKSearch(dualTree.k, dualTree.eps, u.values);
+                        TopKResult newResult = dualTree.tIdx.approxTopKSearch(Data.K, Data.EPS, u.values);
                         operations.add(new SetOperation(OprType.T_DEL, t_idx, u.idx));
-                        TopKResult oldResult = dualTree.results[u.idx];
+                        TopKResult oldResult = Data.RESULTS[u.idx];
                         for (int idx : newResult.results) {
                             if (!oldResult.results.contains(idx)) {
                                 operations.add(new SetOperation(OprType.S_ADD, idx, u.idx));
                             }
                         }
-                        dualTree.results[u.idx] = newResult;
-                    } else if (score >= (1.0 - dualTree.eps) * u.k_score) {
-                        dualTree.results[u.idx].delete(u.idx, t_idx, score, operations);
+                        Data.RESULTS[u.idx] = newResult;
+                    } else if (score >= (1.0 - Data.EPS) * u.k_score) {
+                        Data.RESULTS[u.idx].delete(u.idx, t_idx, score, operations);
                     }
 
                     if (k_updated) {
                         if (cur_node.min_k_score == u.k_score) {
                             outdated = true;
                         }
-                        u.k_score = dualTree.results[u.idx].k_score;
+                        u.k_score = Data.RESULTS[u.idx].k_score;
                     }
                 }
                 if (outdated) {
@@ -112,10 +112,10 @@ public class ConeTree {
                     update_min_k_score(cur_node);
                 }
             } else {
-                if (max_inner_product(t_values, cur_node.lc) >= (1 - dualTree.eps) * cur_node.lc.min_k_score) {
+                if (max_inner_product(t_values, cur_node.lc) >= (1 - Data.EPS) * cur_node.lc.min_k_score) {
                     queue.addLast(cur_node.lc);
                 }
-                if (max_inner_product(t_values, cur_node.rc) >= (1 - dualTree.eps) * cur_node.rc.min_k_score) {
+                if (max_inner_product(t_values, cur_node.rc) >= (1 - Data.EPS) * cur_node.rc.min_k_score) {
                     queue.addLast(cur_node.rc);
                 }
             }

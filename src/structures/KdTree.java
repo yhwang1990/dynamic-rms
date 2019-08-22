@@ -10,14 +10,14 @@ public class KdTree {
     private int dim;
     private int capacity;
 
-    KdTree(int dim, int capacity, double[] min_range, double[] max_range, DualTree dualTree) {
+    KdTree(int dim, int capacity, double[] min_range, double[] max_range) {
         this.dim = dim;
         this.capacity = capacity;
 
         List<Tuple> tuples = new ArrayList<>();
-        for (int i = 0; i < dualTree.tuples.length; i++) {
-            if (!dualTree.isDeleted[i]) {
-                tuples.add(new Tuple(i, dualTree.tuples[i]));
+        for (int i = 0; i < Data.TUPLES.length; i++) {
+            if (! Data.DELETED[i]) {
+                tuples.add(new Tuple(i, Data.TUPLES[i]));
             }
         }
 
