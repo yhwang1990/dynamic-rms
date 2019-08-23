@@ -1,5 +1,6 @@
 package structures;
 
+import generators.UtilityGenerator;
 import utils.*;
 
 import java.util.*;
@@ -8,17 +9,33 @@ public class ConeTree {
 
     private DualTree dualTree;
     private ConeNode root;
+
     private int dim;
+    private int k;
+    private double eps;
     private double tau;
 
-    ConeTree(int dim, double tau, DualTree dualTree) {
-        this.dualTree = dualTree;
-        this.dim = dim;
-        this.tau = tau;
+    public double[][] samples;
+    public TopKResult[] topKResults;
 
-        List<Utility> utilities = new ArrayList<>();
-        for (int i = 0; i < Data.SAMPLE_SIZE; i++) {
-            utilities.add(new Utility(i, Data.RESULTS[i].k_score, Data.UTILITIES[i]));
+    ConeTree(int dim, int k, double eps, double tau, DualTree dualTree) {
+        this.dim = dim;
+        this.k = k;
+        this.eps = eps;
+
+        this.tau = tau;
+        this.dualTree = dualTree;
+
+        this.samples = UtilityGenerator.uniformGenerator(this.dim - 1, Parameter.SAMPLE_SIZE);
+
+        this.topKResults = new TopKResult[Parameter.SAMPLE_SIZE];
+        for (int i = 0; i< Parameter.SAMPLE_SIZE; i++) {
+            this.topKResults[i] = this.dualTree.tIdx.approxTopKSearch(this.k, this.eps, this.samples[i]);
+        }
+
+        List<Integer> utilities = new ArrayList<>();
+        for (int i = 0; i < Parameter.SAMPLE_SIZE; i++) {
+            utilities.add(i);
         }
 
         this.root = new ConeNode(null, utilities);
@@ -37,85 +54,86 @@ public class ConeTree {
         }
     }
 
-    void insert(int t_idx, double[] t_values, List<SetOperation> operations) {
+    void insert(int t_idx, List<SetOperation> operations) {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.addLast(root);
         while (!queue.isEmpty()) {
             ConeNode cur_node = queue.removeFirst();
             if (cur_node.nodeType == NodeType.LEAF) {
                 boolean outdated = false;
-                for (Utility u : cur_node.utilities) {
-                    double score = VectorUtil.inner_product(t_values, u.values);
-                    boolean k_updated = Data.RESULTS[u.idx].add(u.idx, t_idx, score, operations);
+                for (int u_idx : cur_node.utilities) {
+                    double score = VectorUtil.inner_product(dualTree.tIdx.data[t_idx], samples[u_idx]);
+                    double old_k_score = topKResults[u_idx].k_score;
+                    boolean k_updated = topKResults[u_idx].add(u_idx, t_idx, score, operations);
                     if (k_updated) {
-                        if (cur_node.min_k_score == u.k_score) {
+                        if (cur_node.min_k_score == old_k_score) {
                             outdated = true;
                         }
-                        u.k_score = Data.RESULTS[u.idx].k_score;
                     }
                 }
                 if (outdated) {
                     cur_node.min_k_score = Double.MAX_VALUE;
-                    for (Utility u : cur_node.utilities) {
-                        cur_node.min_k_score = Math.min(u.k_score, cur_node.min_k_score);
+                    for (int u_idx : cur_node.utilities) {
+                        cur_node.min_k_score = Math.min(topKResults[u_idx].k_score, cur_node.min_k_score);
                     }
                     update_min_k_score(cur_node);
                 }
             } else {
-                if (max_inner_product(t_values, cur_node.lc) >= (1 - Data.EPS) * cur_node.lc.min_k_score) {
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) >= (1 - eps) * cur_node.lc.min_k_score) {
                     queue.addLast(cur_node.lc);
                 }
-                if (max_inner_product(t_values, cur_node.rc) >= (1 - Data.EPS) * cur_node.rc.min_k_score) {
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) >= (1 - eps) * cur_node.rc.min_k_score) {
                     queue.addLast(cur_node.rc);
                 }
             }
         }
     }
 
-    void delete(int t_idx, double[] t_values, List<SetOperation> operations) {
+    void delete(int t_idx, List<SetOperation> operations) {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.addLast(root);
         while (!queue.isEmpty()) {
             ConeNode cur_node = queue.removeFirst();
             if (cur_node.nodeType == NodeType.LEAF) {
                 boolean outdated = false;
-                for (Utility u : cur_node.utilities) {
-                    double score = VectorUtil.inner_product(t_values, u.values);
+                for (int u_idx : cur_node.utilities) {
+                    double score = VectorUtil.inner_product(dualTree.tIdx.data[t_idx], samples[u_idx]);
+                    double old_k_score = topKResults[u_idx].k_score;
+
                     boolean k_updated = false;
-                    if (score >= u.k_score) {
+                    if (score >= topKResults[u_idx].k_score) {
                         k_updated = true;
-                        TopKResult newResult = dualTree.tIdx.approxTopKSearch(Data.K, Data.EPS, u.values);
-                        operations.add(new SetOperation(OprType.T_DEL, t_idx, u.idx));
-                        TopKResult oldResult = Data.RESULTS[u.idx];
-                        for (int idx : newResult.results) {
-                            if (!oldResult.results.contains(idx)) {
-                                operations.add(new SetOperation(OprType.S_ADD, idx, u.idx));
+                        TopKResult newResult = dualTree.tIdx.approxTopKSearch(k, eps, samples[u_idx]);
+                        operations.add(new SetOperation(OprType.T_DEL, t_idx, u_idx));
+                        TopKResult oldResult = topKResults[u_idx];
+                        for (int new_idx : newResult.results) {
+                            if (!oldResult.results.contains(new_idx)) {
+                                operations.add(new SetOperation(OprType.S_ADD, new_idx, u_idx));
                             }
                         }
-                        Data.RESULTS[u.idx] = newResult;
-                    } else if (score >= (1.0 - Data.EPS) * u.k_score) {
-                        Data.RESULTS[u.idx].delete(u.idx, t_idx, score, operations);
+                        topKResults[u_idx] = newResult;
+                    } else if (score >= (1.0 - eps) * topKResults[u_idx].k_score) {
+                        topKResults[u_idx].delete(u_idx, t_idx, score, operations);
                     }
 
                     if (k_updated) {
-                        if (cur_node.min_k_score == u.k_score) {
+                        if (cur_node.min_k_score == old_k_score) {
                             outdated = true;
                         }
-                        u.k_score = Data.RESULTS[u.idx].k_score;
                     }
                 }
                 if (outdated) {
                     cur_node.min_k_score = Double.MAX_VALUE;
-                    for (Utility u : cur_node.utilities) {
-                        cur_node.min_k_score = Math.min(u.k_score, cur_node.min_k_score);
+                    for (int u_idx : cur_node.utilities) {
+                        cur_node.min_k_score = Math.min(topKResults[u_idx].k_score, cur_node.min_k_score);
                     }
                     update_min_k_score(cur_node);
                 }
             } else {
-                if (max_inner_product(t_values, cur_node.lc) >= (1 - Data.EPS) * cur_node.lc.min_k_score) {
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) >= (1 - eps) * cur_node.lc.min_k_score) {
                     queue.addLast(cur_node.lc);
                 }
-                if (max_inner_product(t_values, cur_node.rc) >= (1 - Data.EPS) * cur_node.rc.min_k_score) {
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) >= (1 - eps) * cur_node.rc.min_k_score) {
                     queue.addLast(cur_node.rc);
                 }
             }
@@ -149,10 +167,10 @@ public class ConeTree {
         double cosine_aperture, min_k_score;
 
         NodeType nodeType;
-        List<Utility> utilities;
+        List<Integer> utilities;
         ConeNode lc, rc, par;
 
-        ConeNode(ConeNode par, List<Utility> utilities) {
+        ConeNode(ConeNode par, List<Integer> utilities) {
             this.par = par;
             this.nodeType = NodeType.LEAF;
 
@@ -164,9 +182,9 @@ public class ConeTree {
 
             this.centroid = new double[dim];
 
-            for (Utility u : utilities) {
+            for (int u_idx : utilities) {
                 for (int i = 0; i < dim; i++) {
-                    this.centroid[i] += u.values[i];
+                    this.centroid[i] += samples[u_idx][i];
                 }
             }
             for (int i = 0; i < dim; i++) {
@@ -176,25 +194,25 @@ public class ConeTree {
 
             this.cosine_aperture = 1.0;
             this.min_k_score = Double.MAX_VALUE;
-            for (Utility u : utilities) {
-                double cosine = VectorUtil.cosine_unit(u.values, this.centroid);
+            for (int u_idx : utilities) {
+                double cosine = VectorUtil.cosine_unit(samples[u_idx], this.centroid);
                 this.cosine_aperture = Math.min(cosine, this.cosine_aperture);
-                this.min_k_score = Math.min(u.k_score, min_k_score);
+                this.min_k_score = Math.min(topKResults[u_idx].k_score, min_k_score);
             }
 
             if (this.cosine_aperture < tau) {
                 double[][] pivots = findPivots();
 
-                List<Utility> leftUtilities = new ArrayList<>();
-                List<Utility> rightUtilities = new ArrayList<>();
-                for (Utility u : utilities) {
-                    double l_cosine = VectorUtil.cosine_unit(u.values, pivots[0]);
-                    double r_cosine = VectorUtil.cosine_unit(u.values, pivots[1]);
+                List<Integer> leftUtilities = new ArrayList<>();
+                List<Integer> rightUtilities = new ArrayList<>();
+                for (int u_idx : utilities) {
+                    double l_cosine = VectorUtil.cosine_unit(samples[u_idx], pivots[0]);
+                    double r_cosine = VectorUtil.cosine_unit(samples[u_idx], pivots[1]);
 
                     if (l_cosine >= r_cosine) {
-                        leftUtilities.add(u);
+                        leftUtilities.add(u_idx);
                     } else {
-                        rightUtilities.add(u);
+                        rightUtilities.add(u_idx);
                     }
                 }
 
@@ -210,23 +228,23 @@ public class ConeTree {
         private double[][] findPivots() {
             double[][] pivots = new double[2][dim];
 
-            double[] u0 = utilities.get(0).values;
+            double[] u0 = samples[utilities.get(0)];
 
             double l_cosine = 1.0;
-            for (Utility u : utilities) {
-                double cosine = VectorUtil.cosine_unit(u.values, u0);
+            for (int u_idx : utilities) {
+                double cosine = VectorUtil.cosine_unit(samples[u_idx], u0);
                 if (cosine < l_cosine) {
                     l_cosine = cosine;
-                    pivots[0] = u.values;
+                    pivots[0] = samples[u_idx];
                 }
             }
 
             double r_cosine = 1.0;
-            for (Utility u : utilities) {
-                double cosine = VectorUtil.cosine_unit(u.values, pivots[0]);
+            for (int u_idx : utilities) {
+                double cosine = VectorUtil.cosine_unit(samples[u_idx], pivots[0]);
                 if (cosine < r_cosine) {
                     r_cosine = cosine;
-                    pivots[1] = u.values;
+                    pivots[1] = samples[u_idx];
                 }
             }
 
@@ -245,8 +263,8 @@ public class ConeTree {
                 b.append("\n");
             } else {
                 b.append(" ");
-                for (Utility u : utilities) {
-                    b.append(u.idx).append(",");
+                for (int u_idx : utilities) {
+                    b.append(u_idx).append(",");
                 }
                 b.deleteCharAt(b.length() - 1).append("\n");
             }
@@ -254,28 +272,28 @@ public class ConeTree {
         }
     }
 
-    private static class Utility {
-        private int idx;
-        private double k_score;
-        private double[] values;
-
-        private Utility(int idx, double k_score, double[] values) {
-            this.idx = idx;
-            this.k_score = k_score;
-            this.values = values;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Utility)) return false;
-            Utility tuple = (Utility) o;
-            return idx == tuple.idx;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(idx);
-        }
-    }
+//    private static class Utility {
+//        private int idx;
+//        private double k_score;
+//        private double[] values;
+//
+//        private Utility(int idx, double k_score, double[] values) {
+//            this.idx = idx;
+//            this.k_score = k_score;
+//            this.values = values;
+//        }
+//
+//        @Override
+//        public boolean equals(Object o) {
+//            if (this == o) return true;
+//            if (!(o instanceof Utility)) return false;
+//            Utility tuple = (Utility) o;
+//            return idx == tuple.idx;
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//            return Objects.hash(idx);
+//        }
+//    }
 }

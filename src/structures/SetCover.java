@@ -1,6 +1,6 @@
 package structures;
 
-import utils.Data;
+import utils.Parameter;
 import utils.OprType;
 import utils.SetOperation;
 import utils.TupleOperation;
@@ -17,12 +17,16 @@ public class SetCover {
     private int[] utilityAssign;
     private int[] utilityLevel;
 
+    private MinSizeRMS instance;
+
     Map<Integer, SetInfo> sol;
 
-    public SetCover() {
+    public SetCover(MinSizeRMS inst) {
+        this.instance = inst;
+
         this.sets = new HashMap<>();
-        for (int i = 0; i < Data.SAMPLE_SIZE; i++) {
-            for (int t_idx : Data.RESULTS[i].results) {
+        for (int i = 0; i < Parameter.SAMPLE_SIZE; i++) {
+            for (int t_idx : this.instance.dualTree.uIdx.topKResults[i].results) {
                 if (! this.sets.containsKey(t_idx)) {
                     this.sets.put(t_idx, new HashSet<>());
                     this.sets.get(t_idx).add(i);
@@ -32,11 +36,11 @@ public class SetCover {
             }
         }
 
-        int maxLevel = (int) (Math.log(Data.SAMPLE_SIZE) / Math.log(SCALE_FACTOR)) + 1;
+        int maxLevel = (int) (Math.log(Parameter.SAMPLE_SIZE) / Math.log(SCALE_FACTOR)) + 1;
         this.levels = new DensityLevel[maxLevel];
 
-        this.utilityAssign = new int[Data.SAMPLE_SIZE];
-        this.utilityLevel = new int[Data.SAMPLE_SIZE];
+        this.utilityAssign = new int[Parameter.SAMPLE_SIZE];
+        this.utilityLevel = new int[Parameter.SAMPLE_SIZE];
 
         this.sol = new HashMap<>();
         greedySetCover();
@@ -48,7 +52,7 @@ public class SetCover {
         for (Map.Entry<Integer, HashSet<Integer>> entry : sets.entrySet()) {
             rankSetList.add(new RankSet(entry.getKey(), entry.getValue()));
         }
-        while (cov_size < Data.SAMPLE_SIZE) {
+        while (cov_size < Parameter.SAMPLE_SIZE) {
             rankSetList.sort(new RankSetComparator());
             RankSet bestSet = rankSetList.get(0);
             SetInfo setInfo = new SetInfo(bestSet);

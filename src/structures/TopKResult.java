@@ -1,4 +1,7 @@
-package utils;
+package structures;
+
+import utils.OprType;
+import utils.SetOperation;
 
 import java.util.*;
 
@@ -8,10 +11,10 @@ public class TopKResult {
     private double eps;
     private PriorityQueue<RankItem> exact_result, approximate_result;
 
-    public double k_score;
-    public HashSet<Integer> results;
+    double k_score;
+    HashSet<Integer> results;
 
-    public TopKResult(int k, double eps) {
+    TopKResult(int k, double eps) {
         this.k = k;
         this.eps = eps;
         this.k_score = 0.0;
@@ -21,7 +24,7 @@ public class TopKResult {
         this.approximate_result = new PriorityQueue<>();
     }
 
-    public boolean update(int idx, double score) {
+    boolean update(int idx, double score) {
         boolean k_updated = false;
         if (score > k_score) {
             exact_result.offer(new RankItem(idx, score));
@@ -49,7 +52,7 @@ public class TopKResult {
         return k_updated;
     }
 
-    public boolean add(int u_idx, int t_idx, double score, List<SetOperation> operations) {
+    boolean add(int u_idx, int t_idx, double score, List<SetOperation> operations) {
         boolean k_updated = false;
         if (score > k_score) {
             exact_result.offer(new RankItem(t_idx, score));
@@ -85,13 +88,13 @@ public class TopKResult {
         return k_updated;
     }
 
-    public void delete(int u_idx, int t_idx, double score, List<SetOperation> operations) {
+    void delete(int u_idx, int t_idx, double score, List<SetOperation> operations) {
         approximate_result.remove(new RankItem(t_idx, score));
         results.remove(t_idx);
         operations.add(new SetOperation(OprType.T_DEL, t_idx, u_idx));
     }
 
-    public void initResults() {
+    void initResults() {
         results.clear();
 
         for(RankItem item : exact_result) {

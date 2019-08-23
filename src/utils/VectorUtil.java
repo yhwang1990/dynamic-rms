@@ -1,5 +1,7 @@
 package utils;
 
+import structures.RankItem;
+
 import java.util.PriorityQueue;
 
 public class VectorUtil {
@@ -106,35 +108,5 @@ public class VectorUtil {
             }
         }
         return sum;
-    }
-
-    public static void bruteForceTopK(int k, double eps, double[] u, double[][] tuples) {
-        double k_score = 0.0;
-        PriorityQueue<RankItem> exactResult = new PriorityQueue<>();
-        PriorityQueue<RankItem> approxResult = new PriorityQueue<>();
-        for (int i = 0; i < tuples.length; i++) {
-            double score = inner_product(u, tuples[i]);
-            if (score > k_score) {
-                exactResult.offer(new RankItem(i, score));
-                if (! exactResult.isEmpty() && exactResult.size() == k) {
-                    k_score = exactResult.peek().score;
-                } else if (! exactResult.isEmpty() && exactResult.size() > k) {
-                    RankItem deleted_item = exactResult.poll();
-                    if (! exactResult.isEmpty()) {
-                        k_score = exactResult.peek().score;
-                    }
-
-                    if (deleted_item.score >= (1 - eps) * k_score) {
-                        approxResult.offer(deleted_item);
-                    }
-
-                    while(! approxResult.isEmpty() && approxResult.peek().score < (1 - eps) * k_score) {
-                        approxResult.poll();
-                    }
-                }
-            } else if (score >= (1 - eps) * k_score) {
-                approxResult.offer(new RankItem(i, score));
-            }
-        }
     }
 }

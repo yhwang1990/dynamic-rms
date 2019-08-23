@@ -1,5 +1,6 @@
 package structures;
 
+import generators.TupleGenerator;
 import utils.*;
 
 import java.util.*;
@@ -10,41 +11,81 @@ public class KdTree {
     private int dim;
     private int capacity;
 
-    KdTree(int dim, int capacity, double[] min_range, double[] max_range) {
+    public boolean[] isDeleted;
+    public double[][] data;
+
+    KdTree(int dim, int capacity) {
         this.dim = dim;
         this.capacity = capacity;
 
-        List<Tuple> tuples = new ArrayList<>();
-        for (int i = 0; i < Data.TUPLES.length; i++) {
-            if (! Data.DELETED[i]) {
-                tuples.add(new Tuple(i, Data.TUPLES[i]));
+        double[] min = new double[this.dim];
+        double[] max = new double[this.dim];
+
+        for (int i = 0; i < this.dim - 1; i++) {
+            min[i] = 0;
+            max[i] = 1;
+        }
+        min[this.dim - 1] = 0;
+        max[this.dim - 1] = Math.sqrt(this.dim - 1);
+
+        this.data = TupleGenerator.uniformGenerator(this.dim - 1, Parameter.DATA_SIZE);
+        this.isDeleted = new boolean[Parameter.DATA_SIZE];
+        for (int i = 0; i < Parameter.INIT_SIZE; i++) {
+            this.isDeleted[i] = false;
+        }
+        for (int i = Parameter.INIT_SIZE; i < Parameter.DATA_SIZE; i++) {
+            this.isDeleted[i] = true;
+        }
+
+        List<Integer> tuples = new ArrayList<>();
+        for (int i = 0; i < Parameter.DATA_SIZE; i++) {
+            if (!isDeleted[i]) {
+                tuples.add(i);
             }
         }
 
-        this.root = new KdNode(min_range, max_range, tuples);
+        this.root = new KdNode(min, max, tuples);
     }
 
-    boolean insert(int idx, double[] values) {
-        return root.insert(new Tuple(idx, values));
+    boolean insert(int t_idx) {
+        boolean isUpdated = false;
+        if (isDeleted[t_idx]) {
+            isDeleted[t_idx] = false;
+            isUpdated = true;
+        }
+        if (!isUpdated) {
+            return false;
+        }
+        return root.insert(t_idx);
     }
 
-    boolean delete(int idx, double[] values) { return root.delete(new Tuple(idx, values)); }
+    boolean delete(int t_idx) {
+        boolean isUpdated = false;
+        if (!isDeleted[t_idx]) {
+            isDeleted[t_idx] = true;
+            isUpdated = true;
+        }
+        if (! isUpdated) {
+            return false;
+        }
+        return root.delete(t_idx);
+    }
 
     TopKResult approxTopKSearch(int k, double eps, double[] u) {
         TopKResult result = new TopKResult(k, eps);
 
         KdNode best_node = root;
         while (best_node.nodeType != NodeType.LEAF) {
-            if (VectorUtil.pointInRect(u, best_node.lc.lBound, best_node.lc.hBound)) {
+            if (VectorUtil.pointInRect(u, best_node.lc.lb, best_node.lc.hb)) {
                 best_node = best_node.lc;
             } else {
                 best_node = best_node.rc;
             }
         }
 
-        for (Tuple t : best_node.tuples) {
-            double score = VectorUtil.inner_product(u, t.values);
-            result.update(t.idx, score);
+        for (int t_idx : best_node.tuples) {
+            double score = VectorUtil.inner_product(u, data[t_idx]);
+            result.update(t_idx, score);
         }
 
         double min_dist = Double.MAX_VALUE;
@@ -59,20 +100,20 @@ public class KdTree {
             if (cur_node.nodeType == NodeType.LEAF) {
                 if (cur_node == best_node)
                     continue;
-                for (Tuple t : cur_node.tuples) {
-                    double score = VectorUtil.inner_product(u, t.values);
-                    boolean k_score_update = result.update(t.idx, score);
+                for (int t_idx : cur_node.tuples) {
+                    double score = VectorUtil.inner_product(u, data[t_idx]);
+                    boolean k_score_update = result.update(t_idx, score);
 
                     if (k_score_update) {
                         min_dist = VectorUtil.prod2dist(dim - 1, (1 - eps) * result.k_score);
                     }
                 }
             } else {
-                double l_dist2 = VectorUtil.dist2Rect(u, cur_node.lc.lBound, cur_node.lc.hBound);
+                double l_dist2 = VectorUtil.dist2Rect(u, cur_node.lc.lb, cur_node.lc.hb);
                 if (l_dist2 <= min_dist) {
                     queue.offer(new RandNode(cur_node.lc, l_dist2));
                 }
-                double r_dist2 = VectorUtil.dist2Rect(u, cur_node.rc.lBound, cur_node.rc.hBound);
+                double r_dist2 = VectorUtil.dist2Rect(u, cur_node.rc.lb, cur_node.rc.hb);
                 if (r_dist2 <= min_dist) {
                     queue.offer(new RandNode(cur_node.rc, r_dist2));
                 }
@@ -82,6 +123,36 @@ public class KdTree {
         result.initResults();
 
         return result;
+    }
+
+    public void bruteForceTopK(int k, double eps, double[] u) {
+        double k_score = 0.0;
+        PriorityQueue<RankItem> exactResult = new PriorityQueue<>();
+        PriorityQueue<RankItem> approxResult = new PriorityQueue<>();
+        for (int i = 0; i < data.length; i++) {
+            double score = VectorUtil.inner_product(u, data[i]);
+            if (score > k_score) {
+                exactResult.offer(new RankItem(i, score));
+                if (! exactResult.isEmpty() && exactResult.size() == k) {
+                    k_score = exactResult.peek().score;
+                } else if (! exactResult.isEmpty() && exactResult.size() > k) {
+                    RankItem deleted_item = exactResult.poll();
+                    if (! exactResult.isEmpty()) {
+                        k_score = exactResult.peek().score;
+                    }
+
+                    if (deleted_item.score >= (1 - eps) * k_score) {
+                        approxResult.offer(deleted_item);
+                    }
+
+                    while(! approxResult.isEmpty() && approxResult.peek().score < (1 - eps) * k_score) {
+                        approxResult.poll();
+                    }
+                }
+            } else if (score >= (1 - eps) * k_score) {
+                approxResult.offer(new RankItem(i, score));
+            }
+        }
     }
 
     public void BFSTraverse() {
@@ -113,15 +184,15 @@ public class KdTree {
     }
 
     private class KdNode {
-        double[] lBound;
-        double[] hBound;
+        double[] lb;
+        double[] hb;
         int size;
 
         NodeType nodeType;
-        List<Tuple> tuples;
+        List<Integer> tuples;
         KdNode lc, rc;
 
-        KdNode(double[] lBound, double[] hBound, List<Tuple> tuples) {
+        KdNode(double[] lb, double[] hb, List<Integer> tuples) {
             this.nodeType = NodeType.LEAF;
 
             this.tuples = tuples;
@@ -130,27 +201,27 @@ public class KdTree {
             this.lc = null;
             this.rc = null;
 
-            this.lBound = lBound;
-            this.hBound = hBound;
+            this.lb = lb;
+            this.hb = hb;
 
             if (this.size > 2 * capacity) {
-                int split_coordinate = findSplitCoordinate(this.lBound, this.hBound);
-                this.tuples.sort(new TupleComparator(split_coordinate));
-                double split_point = this.tuples.get(this.size / 2).values[split_coordinate];
+                int split_coordinate = findSplitCoordinate(this.lb, this.hb);
+                this.tuples.sort(new CoordComp(split_coordinate));
+                double split_point = data[this.tuples.get(this.size / 2)][split_coordinate];
 
-                List<Tuple> leftTuples = new ArrayList<>(this.tuples.subList(0, this.size / 2));
-                List<Tuple> rightTuples = new ArrayList<>(this.tuples.subList(this.size / 2, this.size));
+                List<Integer> leftTuples = new ArrayList<>(this.tuples.subList(0, this.size / 2));
+                List<Integer> rightTuples = new ArrayList<>(this.tuples.subList(this.size / 2, this.size));
 
                 double[] leftLBound = new double[dim];
                 double[] leftHBound = new double[dim];
-                System.arraycopy(this.lBound, 0, leftLBound, 0, dim);
-                System.arraycopy(this.hBound, 0, leftHBound, 0, dim);
+                System.arraycopy(this.lb, 0, leftLBound, 0, dim);
+                System.arraycopy(this.hb, 0, leftHBound, 0, dim);
                 leftHBound[split_coordinate] = split_point;
 
                 double[] rightLBound = new double[dim];
                 double[] rightHBound = new double[dim];
-                System.arraycopy(this.lBound, 0, rightLBound, 0, dim);
-                System.arraycopy(this.hBound, 0, rightHBound, 0, dim);
+                System.arraycopy(this.lb, 0, rightLBound, 0, dim);
+                System.arraycopy(this.hb, 0, rightHBound, 0, dim);
                 rightLBound[split_coordinate] = split_point;
 
                 this.nodeType = NodeType.NON_LEAF;
@@ -173,34 +244,34 @@ public class KdTree {
             return max_coordinate;
         }
 
-        private boolean insert(Tuple t) {
+        private boolean insert(int t_idx) {
             size += 1;
             if (nodeType == NodeType.NON_LEAF) {
-                if (VectorUtil.pointInRect(t.values, lc.lBound, lc.hBound)) {
-                    return lc.insert(t);
+                if (VectorUtil.pointInRect(data[t_idx], lc.lb, lc.hb)) {
+                    return lc.insert(t_idx);
                 } else {
-                    return rc.insert(t);
+                    return rc.insert(t_idx);
                 }
             } else {
-                tuples.add(t);
+                tuples.add(t_idx);
                 if (size > 2 * capacity) {
-                    int split_coordinate = findSplitCoordinate(lBound, hBound);
-                    tuples.sort(new TupleComparator(split_coordinate));
-                    double split_point = tuples.get(size / 2).values[split_coordinate];
+                    int split_coordinate = findSplitCoordinate(lb, hb);
+                    tuples.sort(new CoordComp(split_coordinate));
+                    double split_point = data[tuples.get(size / 2)][split_coordinate];
 
-                    List<Tuple> leftTuples = new ArrayList<>(tuples.subList(0, size / 2));
-                    List<Tuple> rightTuples = new ArrayList<>(tuples.subList(size / 2, size));
+                    List<Integer> leftTuples = new ArrayList<>(tuples.subList(0, size / 2));
+                    List<Integer> rightTuples = new ArrayList<>(tuples.subList(size / 2, size));
 
                     double[] leftLBound = new double[dim];
                     double[] leftHBound = new double[dim];
-                    System.arraycopy(lBound, 0, leftLBound, 0, dim);
-                    System.arraycopy(hBound, 0, leftHBound, 0, dim);
+                    System.arraycopy(lb, 0, leftLBound, 0, dim);
+                    System.arraycopy(hb, 0, leftHBound, 0, dim);
                     leftHBound[split_coordinate] = split_point;
 
                     double[] rightLBound = new double[dim];
                     double[] rightHBound = new double[dim];
-                    System.arraycopy(lBound, 0, rightLBound, 0, dim);
-                    System.arraycopy(hBound, 0, rightHBound, 0, dim);
+                    System.arraycopy(lb, 0, rightLBound, 0, dim);
+                    System.arraycopy(hb, 0, rightHBound, 0, dim);
                     rightLBound[split_coordinate] = split_point;
 
                     nodeType = NodeType.NON_LEAF;
@@ -213,20 +284,20 @@ public class KdTree {
             }
         }
 
-        private boolean delete(Tuple t) {
+        private boolean delete(int t_idx) {
             if (nodeType == NodeType.LEAF) {
-                boolean is_deleted = tuples.remove(t);
+                boolean is_deleted = tuples.remove(Integer.valueOf(t_idx));
                 if (is_deleted) {
                     size -= 1;
                 }
                 return is_deleted;
             } else if (nodeType == NodeType.NON_LEAF && lc.size > capacity && rc.size > capacity) {
                 boolean left_deleted = false, right_deleted = false;
-                if (VectorUtil.pointInRect(t.values, lc.lBound, lc.hBound)) {
-                    left_deleted = lc.delete(t);
+                if (VectorUtil.pointInRect(data[t_idx], lc.lb, lc.hb)) {
+                    left_deleted = lc.delete(t_idx);
                 }
-                if (VectorUtil.pointInRect(t.values, rc.lBound, rc.hBound)) {
-                    right_deleted = rc.delete(t);
+                if (VectorUtil.pointInRect(data[t_idx], rc.lb, rc.hb)) {
+                    right_deleted = rc.delete(t_idx);
                 }
                 if (left_deleted || right_deleted) {
                     size -= 1;
@@ -249,7 +320,7 @@ public class KdTree {
                     }
                 }
 
-                boolean is_deleted = tuples.remove(t);
+                boolean is_deleted = tuples.remove(Integer.valueOf(t_idx));
                 if (is_deleted) {
                     size -= 1;
                 }
@@ -259,23 +330,23 @@ public class KdTree {
                     lc = null;
                     rc = null;
                 } else {
-                    int split_coordinate = findSplitCoordinate(lBound, hBound);
-                    tuples.sort(new TupleComparator(split_coordinate));
-                    double split_point = tuples.get(size / 2).values[split_coordinate];
+                    int split_coordinate = findSplitCoordinate(lb, hb);
+                    tuples.sort(new CoordComp(split_coordinate));
+                    double split_point = data[tuples.get(size / 2)][split_coordinate];
 
-                    List<Tuple> listLeftTuples = new ArrayList<>(tuples.subList(0, size / 2));
-                    List<Tuple> listRightTuples = new ArrayList<>(tuples.subList(size / 2, size));
+                    List<Integer> listLeftTuples = new ArrayList<>(tuples.subList(0, size / 2));
+                    List<Integer> listRightTuples = new ArrayList<>(tuples.subList(size / 2, size));
 
                     double[] leftLBound = new double[dim];
                     double[] leftHBound = new double[dim];
-                    System.arraycopy(lBound, 0, leftLBound, 0, dim);
-                    System.arraycopy(hBound, 0, leftHBound, 0, dim);
+                    System.arraycopy(lb, 0, leftLBound, 0, dim);
+                    System.arraycopy(hb, 0, leftHBound, 0, dim);
                     leftHBound[split_coordinate] = split_point;
 
                     double[] rightLBound = new double[dim];
                     double[] rightHBound = new double[dim];
-                    System.arraycopy(lBound, 0, rightLBound, 0, dim);
-                    System.arraycopy(hBound, 0, rightHBound, 0, dim);
+                    System.arraycopy(lb, 0, rightLBound, 0, dim);
+                    System.arraycopy(hb, 0, rightHBound, 0, dim);
                     rightLBound[split_coordinate] = split_point;
 
                     nodeType = NodeType.NON_LEAF;
@@ -293,14 +364,14 @@ public class KdTree {
             b.append(nodeType).append(" ");
             b.append(size).append(" ");
             for (int i = 0; i < dim; i++) {
-                b.append("[").append(lBound[i]).append(",").append(hBound[i]).append("] ");
+                b.append("[").append(lb[i]).append(",").append(hb[i]).append("] ");
             }
             if (nodeType == NodeType.NON_LEAF) {
                 b.append("\n");
             } else {
                 b.append(" ");
-                for (Tuple t : tuples) {
-                    b.append(t.idx).append(",");
+                for (int t_idx : tuples) {
+                    b.append(t_idx).append(",");
                 }
                 b.deleteCharAt(b.length() - 1).append("\n");
             }
@@ -308,40 +379,40 @@ public class KdTree {
         }
     }
 
-    private static class Tuple {
-        private int idx;
-        private double[] values;
+//    private static class Tuple {
+//        private int idx;
+//        private double[] values;
+//
+//        private Tuple(int idx, double[] values) {
+//            this.idx = idx;
+//            this.values = values;
+//        }
+//
+//        @Override
+//        public boolean equals(Object o) {
+//            if (this == o) return true;
+//            if (!(o instanceof Tuple)) return false;
+//            Tuple tuple = (Tuple) o;
+//            return idx == tuple.idx;
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//            return Objects.hash(idx);
+//        }
+//    }
+//
+    private class CoordComp implements Comparator<Integer> {
 
-        private Tuple(int idx, double[] values) {
-            this.idx = idx;
-            this.values = values;
+        private int coord;
+
+        private CoordComp(int coord) {
+            this.coord = coord;
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Tuple)) return false;
-            Tuple tuple = (Tuple) o;
-            return idx == tuple.idx;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(idx);
-        }
-    }
-
-    private static class TupleComparator implements Comparator<Tuple> {
-
-        private int coordinate;
-
-        private TupleComparator(int coordinate) {
-            this.coordinate = coordinate;
-        }
-
-        @Override
-        public int compare(Tuple t1, Tuple t2) {
-            return Double.compare(t1.values[coordinate], t2.values[coordinate]);
+        public int compare(Integer t1, Integer t2) {
+            return Double.compare(data[t1][coord], data[t2][coord]);
         }
     }
 }
