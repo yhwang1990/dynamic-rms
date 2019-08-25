@@ -21,7 +21,7 @@ public class Operations {
 
     public void print() {
         System.out.print(t_idx + " ");
-        if (oprType == OprType.T_ADD) {
+        if (oprType == OprType.ADD) {
             System.out.println("ADD");
         } else {
             System.out.println("DEL");

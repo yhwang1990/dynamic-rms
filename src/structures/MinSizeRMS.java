@@ -26,8 +26,15 @@ public class MinSizeRMS {
         Parameter.SAMPLE_SIZE = sample_size;
     }
 
-    private void readDataset() {}
+    private void readData() {}
 
-    private void updateDataset(TupleOpr opr) {
+    private void readOprs() {}
+
+    private void update(TupleOpr opr) {
+        if (opr.oprType == OprType.ADD) {
+            Operations operations = dualTree.insert(opr.t_idx);
+        } else {
+            Operations operations = dualTree.delete(opr.t_idx);
+        }
     }
 }

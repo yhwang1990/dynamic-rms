@@ -1,5 +1,6 @@
 package structures;
 
+import utils.OprType;
 import utils.Parameter;
 
 import java.util.*;
@@ -83,6 +84,15 @@ public class SetCover {
 
             cov_size += setInfo.cov.size();
         }
+    }
+
+    public void update(Operations opr) {
+        if (opr.oprType == OprType.ADD) {
+
+        } else {
+
+        }
+
     }
 
 //    public void update(TupleOpr t_opr, List<SetOpr> s_oprs) {

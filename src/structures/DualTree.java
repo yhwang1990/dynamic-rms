@@ -14,7 +14,7 @@ public class DualTree {
     }
 
     public Operations insert(int t_idx) {
-        Operations opr = new Operations(t_idx, OprType.T_ADD);
+        Operations opr = new Operations(t_idx, OprType.ADD);
         boolean is_inserted = tIdx.insert(t_idx);
         if (!is_inserted) {
             System.err.println("Insert " + t_idx + " failed");
@@ -25,7 +25,7 @@ public class DualTree {
     }
 
     public Operations delete(int t_idx) {
-        Operations opr = new Operations(t_idx, OprType.T_DEL);
+        Operations opr = new Operations(t_idx, OprType.DEL);
         boolean is_deleted = tIdx.delete(t_idx);
         if (!is_deleted) {
             System.err.println("Delete " + t_idx + " failed");
