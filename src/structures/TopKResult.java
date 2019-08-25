@@ -1,8 +1,5 @@
 package structures;
 
-import utils.OprType;
-import utils.SetOperation;
-
 import java.util.*;
 
 public class TopKResult {
@@ -52,12 +49,12 @@ public class TopKResult {
         return k_updated;
     }
 
-    boolean add(int u_idx, int t_idx, double score, List<SetOperation> operations) {
+    boolean add(int u_idx, int t_idx, double score, Operations opr) {
         boolean k_updated = false;
         if (score > k_score) {
             exact_result.offer(new RankItem(t_idx, score));
             results.add(t_idx);
-            operations.add(new SetOperation(OprType.T_ADD, t_idx, u_idx));
+            opr.utilities.add(u_idx);
             k_updated = true;
 
             if (! exact_result.isEmpty() && exact_result.size() > k) {
@@ -70,28 +67,28 @@ public class TopKResult {
                     approximate_result.offer(deleted_item);
                 } else {
                     results.remove(deleted_item.idx);
-                    operations.add(new SetOperation(OprType.S_DEL, deleted_item.idx, u_idx));
+                    opr.oprs.add(new Operations.SetOpr(deleted_item.idx, u_idx));
                 }
 
                 while(! approximate_result.isEmpty() && approximate_result.peek().score < (1 - eps) * k_score) {
                     RankItem obsolete_item = approximate_result.poll();
                     results.remove(obsolete_item.idx);
-                    operations.add(new SetOperation(OprType.S_DEL, obsolete_item.idx, u_idx));
+                    opr.oprs.add(new Operations.SetOpr(obsolete_item.idx, u_idx));
                 }
             }
         } else if (score >= (1 - eps) * k_score) {
             approximate_result.offer(new RankItem(t_idx, score));
             results.add(t_idx);
-            operations.add(new SetOperation(OprType.T_ADD, t_idx, u_idx));
+            opr.utilities.add(u_idx);
         }
 
         return k_updated;
     }
 
-    void delete(int u_idx, int t_idx, double score, List<SetOperation> operations) {
+    void delete(int u_idx, int t_idx, double score, Operations opr) {
         approximate_result.remove(new RankItem(t_idx, score));
         results.remove(t_idx);
-        operations.add(new SetOperation(OprType.T_DEL, t_idx, u_idx));
+        opr.utilities.add(u_idx);
     }
 
     void initResults() {

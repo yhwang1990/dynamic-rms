@@ -1,9 +1,7 @@
 package structures;
 
+import utils.OprType;
 import utils.Parameter;
-import utils.SetOperation;
-
-import java.util.*;
 
 public class DualTree {
 
@@ -15,25 +13,25 @@ public class DualTree {
         this.uIdx = new ConeTree(dim + 1, k, eps, Parameter.TAU, this);
     }
 
-    public List<SetOperation> insert(int t_idx) {
-        List<SetOperation> operations = new ArrayList<>();
+    public Operations insert(int t_idx) {
+        Operations opr = new Operations(t_idx, OprType.T_ADD);
         boolean is_inserted = tIdx.insert(t_idx);
         if (!is_inserted) {
             System.err.println("Insert " + t_idx + " failed");
         }
-        uIdx.insert(t_idx, operations);
+        uIdx.insert(t_idx, opr);
 
-        return operations;
+        return opr;
     }
 
-    public List<SetOperation> delete(int t_idx) {
-        List<SetOperation> operations = new ArrayList<>();
+    public Operations delete(int t_idx) {
+        Operations opr = new Operations(t_idx, OprType.T_DEL);
         boolean is_deleted = tIdx.delete(t_idx);
         if (!is_deleted) {
             System.err.println("Delete " + t_idx + " failed");
         }
-        uIdx.delete(t_idx, operations);
+        uIdx.delete(t_idx, opr);
 
-        return operations;
+        return opr;
     }
 }

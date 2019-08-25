@@ -1,9 +1,6 @@
 package structures;
 
 import utils.Parameter;
-import utils.OprType;
-import utils.SetOperation;
-import utils.TupleOperation;
 
 import java.util.*;
 
@@ -25,13 +22,13 @@ public class SetCover {
         this.instance = inst;
 
         this.sets = new HashMap<>();
-        for (int i = 0; i < Parameter.SAMPLE_SIZE; i++) {
-            for (int t_idx : this.instance.dualTree.uIdx.topKResults[i].results) {
+        for (int u_idx = 0; u_idx < Parameter.SAMPLE_SIZE; u_idx++) {
+            for (int t_idx : this.instance.dualTree.uIdx.topKResults[u_idx].results) {
                 if (! this.sets.containsKey(t_idx)) {
                     this.sets.put(t_idx, new HashSet<>());
-                    this.sets.get(t_idx).add(i);
+                    this.sets.get(t_idx).add(u_idx);
                 } else {
-                    this.sets.get(t_idx).add(i);
+                    this.sets.get(t_idx).add(u_idx);
                 }
             }
         }
@@ -43,7 +40,7 @@ public class SetCover {
         this.utilityLevel = new int[Parameter.SAMPLE_SIZE];
 
         this.sol = new HashMap<>();
-        greedySetCover();
+        this.greedySetCover();
     }
 
     private void greedySetCover() {
@@ -54,52 +51,57 @@ public class SetCover {
         }
         while (cov_size < Parameter.SAMPLE_SIZE) {
             rankSetList.sort(new RankSetComparator());
-            RankSet bestSet = rankSetList.get(0);
-            SetInfo setInfo = new SetInfo(bestSet);
-            sol.put(bestSet.idx, setInfo);
+            RankSet next = rankSetList.get(0);
+            SetInfo setInfo = new SetInfo(next);
+            sol.put(next.idx, setInfo);
 
             for (int u_idx : setInfo.cov) {
-                utilityAssign[u_idx] = bestSet.idx;
+                utilityAssign[u_idx] = next.idx;
                 utilityLevel[u_idx] = setInfo.level_idx;
             }
 
             if (levels[setInfo.level_idx] == null) {
                 levels[setInfo.level_idx] = new DensityLevel();
-                levels[setInfo.level_idx].setIdx.add(bestSet.idx);
-                for (RankSet rs : rankSetList) {
-                    if (! rs.uncovered.isEmpty()) {
-                        levels[setInfo.level_idx].setDensity.put(rs.idx, rs.uncovered.size());
-                    }
-                }
-            } else {
-                levels[setInfo.level_idx].setIdx.add(bestSet.idx);
             }
 
+            levels[setInfo.level_idx].setIdx.add(next.idx);
+            levels[setInfo.level_idx].levelCov.addAll(setInfo.cov);
+
             for (RankSet rs : rankSetList) {
-                rs.uncovered.removeAll(setInfo.cov);
+                if (! rs.uncovered.isEmpty()) {
+                    int pre_size = rs.uncovered.size();
+                    rs.uncovered.removeAll(setInfo.cov);
+                    int after_size = rs.uncovered.size();
+                    if (!levels[setInfo.level_idx].setDensity.containsKey(rs.idx) && pre_size > after_size) {
+                        levels[setInfo.level_idx].setDensity.put(rs.idx, pre_size - after_size);
+                    } else if (pre_size > after_size) {
+                        int cov = levels[setInfo.level_idx].setDensity.get(rs.idx);
+                        levels[setInfo.level_idx].setDensity.replace(rs.idx, cov + (pre_size - after_size));
+                    }
+                }
             }
 
             cov_size += setInfo.cov.size();
         }
     }
 
-    public void update(TupleOperation t_opr, List<SetOperation> s_oprs) {
-        for (SetOperation s_opr : s_oprs) {
-            if (s_opr.oprType == OprType.T_ADD || s_opr.oprType == OprType.S_ADD) {
-                if (! sets.containsKey(s_opr.t_idx)) {
-                    sets.put(s_opr.t_idx, new HashSet<>());
-                    sets.get(s_opr.t_idx).add(s_opr.u_idx);
-                } else {
-                    sets.get(s_opr.t_idx).add(s_opr.u_idx);
-                }
-            } else if (s_opr.oprType == OprType.T_DEL || s_opr.oprType == OprType.S_DEL) {
-                sets.get(s_opr.t_idx).remove(s_opr.u_idx);
-                if (sets.get(s_opr.t_idx).isEmpty()) {
-                    sets.remove(s_opr.t_idx);
-                }
-            }
-        }
-    }
+//    public void update(TupleOpr t_opr, List<SetOpr> s_oprs) {
+//        for (SetOpr s_opr : s_oprs) {
+//            if (s_opr.oprType == OprType.T_ADD || s_opr.oprType == OprType.S_ADD) {
+//                if (! sets.containsKey(s_opr.t_idx)) {
+//                    sets.put(s_opr.t_idx, new HashSet<>());
+//                    sets.get(s_opr.t_idx).add(s_opr.u_idx);
+//                } else {
+//                    sets.get(s_opr.t_idx).add(s_opr.u_idx);
+//                }
+//            } else if (s_opr.oprType == OprType.T_DEL || s_opr.oprType == OprType.S_DEL) {
+//                sets.get(s_opr.t_idx).remove(s_opr.u_idx);
+//                if (sets.get(s_opr.t_idx).isEmpty()) {
+//                    sets.remove(s_opr.t_idx);
+//                }
+//            }
+//        }
+//    }
 
     public void print() {
         System.out.println("Solution Overview");
@@ -149,10 +151,12 @@ public class SetCover {
 
     private static class DensityLevel {
         Set<Integer> setIdx;
+        Set<Integer> levelCov;
         Map<Integer, Integer> setDensity;
 
         DensityLevel() {
             this.setIdx = new HashSet<>();
+            this.levelCov = new HashSet<>();
             this.setDensity = new HashMap<>();
         }
     }

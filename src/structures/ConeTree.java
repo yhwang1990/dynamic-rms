@@ -54,7 +54,7 @@ public class ConeTree {
         }
     }
 
-    void insert(int t_idx, List<SetOperation> operations) {
+    void insert(int t_idx, Operations opr) {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.addLast(root);
         while (!queue.isEmpty()) {
@@ -64,7 +64,7 @@ public class ConeTree {
                 for (int u_idx : cur_node.utilities) {
                     double score = VectorUtil.inner_product(dualTree.tIdx.data[t_idx], samples[u_idx]);
                     double old_k_score = topKResults[u_idx].k_score;
-                    boolean k_updated = topKResults[u_idx].add(u_idx, t_idx, score, operations);
+                    boolean k_updated = topKResults[u_idx].add(u_idx, t_idx, score, opr);
                     if (k_updated) {
                         if (cur_node.min_k_score == old_k_score) {
                             outdated = true;
@@ -89,7 +89,7 @@ public class ConeTree {
         }
     }
 
-    void delete(int t_idx, List<SetOperation> operations) {
+    void delete(int t_idx, Operations opr) {
         LinkedList<ConeNode> queue = new LinkedList<>();
         queue.addLast(root);
         while (!queue.isEmpty()) {
@@ -104,16 +104,16 @@ public class ConeTree {
                     if (score >= topKResults[u_idx].k_score) {
                         k_updated = true;
                         TopKResult newResult = dualTree.tIdx.approxTopKSearch(k, eps, samples[u_idx]);
-                        operations.add(new SetOperation(OprType.T_DEL, t_idx, u_idx));
+                        opr.utilities.add(u_idx);
                         TopKResult oldResult = topKResults[u_idx];
                         for (int new_idx : newResult.results) {
                             if (!oldResult.results.contains(new_idx)) {
-                                operations.add(new SetOperation(OprType.S_ADD, new_idx, u_idx));
+                                opr.oprs.add(new Operations.SetOpr(new_idx, u_idx));
                             }
                         }
                         topKResults[u_idx] = newResult;
                     } else if (score >= (1.0 - eps) * topKResults[u_idx].k_score) {
-                        topKResults[u_idx].delete(u_idx, t_idx, score, operations);
+                        topKResults[u_idx].delete(u_idx, t_idx, score, opr);
                     }
 
                     if (k_updated) {

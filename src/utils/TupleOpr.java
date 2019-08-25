@@ -1,6 +1,6 @@
 package utils;
 
-public class TupleOperation {
+public class TupleOpr {
     OprType oprType;
     int t_idx;
 }

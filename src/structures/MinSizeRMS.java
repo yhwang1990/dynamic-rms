@@ -28,6 +28,6 @@ public class MinSizeRMS {
 
     private void readDataset() {}
 
-    private void updateDataset(TupleOperation opr) {
+    private void updateDataset(TupleOpr opr) {
     }
 }
