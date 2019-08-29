@@ -30,9 +30,11 @@ public class MinSizeRMS {
 
     private void readOprs() {}
 
-    private void update(TupleOpr opr) {
+    public void update(TupleOpr opr) {
         if (opr.oprType == OprType.ADD) {
             Operations operations = dualTree.insert(opr.t_idx);
+            //operations.print();
+            setCover.update(operations);
         } else {
             Operations operations = dualTree.delete(opr.t_idx);
         }

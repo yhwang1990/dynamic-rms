@@ -8,8 +8,8 @@ public class Operations {
     int t_idx;
     OprType oprType;
 
-    public List<Integer> utilities;
-    public List<SetOpr> oprs;
+    List<Integer> utilities;
+    List<SetOpr> oprs;
 
     Operations(int t_idx, OprType oprType) {
         this.t_idx = t_idx;
