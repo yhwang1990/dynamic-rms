@@ -24,7 +24,7 @@ public class SetCover {
         this.mapping = new HashMap<>();
         for (int u_idx = 0; u_idx < Parameter.SAMPLE_SIZE; u_idx++) {
             for (int t_idx : this.instance.dualTree.uIdx.topKResults[u_idx].results) {
-                if (! this.mapping.containsKey(t_idx)) {
+                if (!this.mapping.containsKey(t_idx)) {
                     this.mapping.put(t_idx, new HashSet<>());
                     this.mapping.get(t_idx).add(u_idx);
                 } else {
@@ -70,7 +70,7 @@ public class SetCover {
             levels[solInfo.level_idx].tuples.add(next.idx);
 
             for (RankSet rs : rankSetList) {
-                if (! rs.uncovered.isEmpty()) {
+                if (!rs.uncovered.isEmpty()) {
                     int pre_size = rs.uncovered.size();
                     rs.uncovered.removeAll(solInfo.cov);
                     int after_size = rs.uncovered.size();
@@ -101,8 +101,6 @@ public class SetCover {
                 int old_density = levels[old_level].density.get(setOpr.t_idx);
                 levels[old_level].density.replace(setOpr.t_idx, old_density - 1);
             }
-            //System.out.println("## After set deletions ##");
-            //printDensity();
 
             Set<Integer> unAssigned = new HashSet<>();
             for (Operations.SetOpr setOpr : opr.oprs) {
@@ -139,30 +137,14 @@ public class SetCover {
                         }
                     }
                 }
-
-                for (int u_idx : opr.utilities) {
-                    int level_idx = u_level[u_idx];
-                    if (!levels[level_idx].density.containsKey(opr.t_idx)) {
-                        levels[level_idx].density.put(opr.t_idx, 1);
-                    } else {
-                        levels[level_idx].density.replace(opr.t_idx, levels[level_idx].density.get(opr.t_idx) + 1);
-                    }
+            }
+            for (int u_idx : opr.utilities) {
+                int level_idx = u_level[u_idx];
+                if (!levels[level_idx].density.containsKey(opr.t_idx)) {
+                    levels[level_idx].density.put(opr.t_idx, 1);
+                } else {
+                    levels[level_idx].density.replace(opr.t_idx, levels[level_idx].density.get(opr.t_idx) + 1);
                 }
-
-                //System.out.println("## Add " + opr.t_idx + " to sol ##");
-                //printDensity();
-            } else {
-                for (int u_idx : opr.utilities) {
-                    int level_idx = u_level[u_idx];
-                    if (!levels[level_idx].density.containsKey(opr.t_idx)) {
-                        levels[level_idx].density.put(opr.t_idx, 1);
-                    } else {
-                        levels[level_idx].density.replace(opr.t_idx, levels[level_idx].density.get(opr.t_idx) + 1);
-                    }
-                }
-
-                //System.out.println("## Init density for " + opr.t_idx + " ##");
-                //printDensity();
             }
         } else if (opr.oprType == OprType.DEL) {
             // to be added
@@ -248,17 +230,14 @@ public class SetCover {
                         }
                     }
                 }
-                //System.out.println("## Reassign " + u_idx + " from " + old_level + " to " + new_level + " ##");
-                //printDensity();
             }
         }
     }
 
     private void move(int t_idx) {
-        if(sol.get(t_idx).cov.isEmpty()) {
+        if (sol.get(t_idx).cov.isEmpty()) {
             SolInfo solInfo = sol.remove(t_idx);
             levels[solInfo.level_idx].tuples.remove(t_idx);
-
             return;
         }
 
@@ -290,9 +269,6 @@ public class SetCover {
                 }
             }
         }
-
-        //System.out.println("## Move " + t_idx + " from " + old_level + " to " + new_level + " ##");
-        //printDensity();
     }
 
     private void stabilize() {
@@ -366,9 +342,6 @@ public class SetCover {
                             }
                         }
                     }
-
-                    //System.out.println("## Add " + unstable_idx + " to sol for stable ##");
-                    //printDensity();
                 } else {
                     int new_level = sol.get(unstable_idx).level_idx;
 
@@ -402,9 +375,6 @@ public class SetCover {
                         }
                     }
 
-                    //System.out.println("## Adjust cov " + unstable_idx + " for stable ##");
-                    //printDensity();
-
                     int s = sol.get(unstable_idx).cov.size(), l = sol.get(unstable_idx).level_idx;
                     if (s > levels[l].high)
                         canMove.add(unstable_idx);
@@ -416,7 +386,7 @@ public class SetCover {
         }
     }
 
-    public void print() {
+    public void printDetails() {
         System.out.println("Solution:");
         for (int t_idx : sol.keySet()) {
             System.out.print(t_idx + "," + sol.get(t_idx).level_idx + "," + sol.get(t_idx).cov.size() + ",");
@@ -455,7 +425,7 @@ public class SetCover {
         System.out.println();
     }
 
-    public void printSimple() {
+    public void print() {
         System.out.println("Solution:");
         for (int t_idx : sol.keySet()) {
             System.out.println(t_idx + "," + sol.get(t_idx).level_idx + "," + sol.get(t_idx).cov.size());
@@ -479,19 +449,55 @@ public class SetCover {
         System.out.println();
     }
 
-//    private void printDensity() {
-//        System.out.println("###############################");
-//        for (int i = 0; i < levels.length; i++) {
-//            if (levels[i] != null) {
-//                System.out.println("Level " + i);
-//                for (Map.Entry<Integer, Integer> entry : levels[i].density.entrySet()) {
-//                    System.out.print(entry.getKey() + "," + entry.getValue() + " ");
-//                }
-//                System.out.println();
-//            }
-//        }
-//        System.out.println("###############################");
-//    }
+    public void validate() {
+        int total_cov = 0;
+        for (int t_idx : sol.keySet()) {
+            total_cov += sol.get(t_idx).cov.size();
+            int level_idx = sol.get(t_idx).level_idx;
+            assert levels[level_idx].tuples.contains(t_idx) : "Error in level.tuples";
+            for (int u_idx : sol.get(t_idx).cov) {
+                assert u_assign[u_idx] == t_idx : "Error in u_assign";
+                assert u_level[u_idx] == level_idx : "Error in u_level";
+            }
+        }
+        assert total_cov == Parameter.SAMPLE_SIZE : "Error in sol.cov";
+
+        for (DensityLevel level : levels) {
+            if (level != null && level.tuples.isEmpty()) {
+                for (int t_idx : level.density.keySet()) {
+                    assert level.density.get(t_idx) == 0 : "Error in level.density";
+                }
+            } else if (level != null) {
+                Set<Integer> levelCov = new HashSet<>();
+                for (int t_idx : level.tuples) {
+                    levelCov.addAll(sol.get(t_idx).cov);
+                }
+                for (int t_idx : level.density.keySet()) {
+                    Set<Integer> intersect = new HashSet<>(levelCov);
+                    intersect.retainAll(mapping.get(t_idx));
+                    assert level.density.get(t_idx) == intersect.size() : "Error in level.density";
+                }
+            }
+        }
+
+        System.out.println("No error found");
+    }
+
+    /*
+    private void printDensity() {
+        System.out.println("###############################");
+        for (int i = 0; i < levels.length; i++) {
+            if (levels[i] != null) {
+                System.out.println("Level " + i);
+                for (Map.Entry<Integer, Integer> entry : levels[i].density.entrySet()) {
+                    System.out.print(entry.getKey() + "," + entry.getValue() + " ");
+                }
+                System.out.println();
+            }
+        }
+        System.out.println("###############################");
+    }
+    */
 
     public Set<Integer> result() {
         return sol.keySet();
