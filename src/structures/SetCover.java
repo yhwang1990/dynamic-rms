@@ -1,11 +1,11 @@
 package structures;
 
 import utils.OprType;
-import utils.Parameter;
 
 import java.util.*;
 
 public class SetCover {
+
     public Map<Integer, HashSet<Integer>> mapping;
 
     private DensityLevel[] levels;
@@ -13,16 +13,19 @@ public class SetCover {
     private int[] u_assign;
     private int[] u_level;
 
+    private int sample_size;
+
     private MinSizeRMS instance;
 
     private Map<Integer, SolInfo> sol;
 
     SetCover(MinSizeRMS inst) {
         this.instance = inst;
+        this.sample_size = inst.sample_size;
 
         // construct initial mapping
         this.mapping = new HashMap<>();
-        for (int u_idx = 0; u_idx < Parameter.SAMPLE_SIZE; u_idx++) {
+        for (int u_idx = 0; u_idx < this.sample_size; u_idx++) {
             for (int t_idx : this.instance.dualTree.uIdx.topKResults[u_idx].results) {
                 if (!this.mapping.containsKey(t_idx)) {
                     this.mapping.put(t_idx, new HashSet<>());
@@ -33,11 +36,11 @@ public class SetCover {
             }
         }
 
-        int maxLevel = (int) (Math.log(Parameter.SAMPLE_SIZE) / Math.log(2)) + 1;
+        int maxLevel = (int) (Math.log(this.sample_size) / Math.log(2)) + 1;
         this.levels = new DensityLevel[maxLevel];
 
-        this.u_assign = new int[Parameter.SAMPLE_SIZE];
-        this.u_level = new int[Parameter.SAMPLE_SIZE];
+        this.u_assign = new int[this.sample_size];
+        this.u_level = new int[this.sample_size];
 
         // compute initial solution
         this.sol = new HashMap<>();
@@ -52,7 +55,7 @@ public class SetCover {
             rankSetList.add(new RankSet(entry.getKey(), entry.getValue()));
         }
 
-        while (cov_size < Parameter.SAMPLE_SIZE) {
+        while (cov_size < this.sample_size) {
             rankSetList.sort(new RankSetComparator());
             RankSet next = rankSetList.get(0);
             SolInfo solInfo = new SolInfo(next);
@@ -97,9 +100,9 @@ public class SetCover {
         Set<Integer> toBeMoved = new HashSet<>();
         if (opr.oprType == OprType.ADD) {
             for (Operations.SetOpr setOpr : opr.oprs) {
-                int old_level = u_level[setOpr.u_idx];
-                int old_density = levels[old_level].density.get(setOpr.t_idx);
-                levels[old_level].density.replace(setOpr.t_idx, old_density - 1);
+                int lv = u_level[setOpr.u_idx];
+                int old_density = levels[lv].density.get(setOpr.t_idx);
+                levels[lv].density.replace(setOpr.t_idx, old_density - 1);
             }
 
             Set<Integer> unAssigned = new HashSet<>();
@@ -139,15 +142,32 @@ public class SetCover {
                 }
             }
             for (int u_idx : opr.utilities) {
-                int level_idx = u_level[u_idx];
-                if (!levels[level_idx].density.containsKey(opr.t_idx)) {
-                    levels[level_idx].density.put(opr.t_idx, 1);
+                int lv = u_level[u_idx];
+                if (!levels[lv].density.containsKey(opr.t_idx)) {
+                    levels[lv].density.put(opr.t_idx, 1);
                 } else {
-                    levels[level_idx].density.replace(opr.t_idx, levels[level_idx].density.get(opr.t_idx) + 1);
+                    levels[lv].density.replace(opr.t_idx, levels[lv].density.get(opr.t_idx) + 1);
                 }
             }
         } else if (opr.oprType == OprType.DEL) {
-            // to be added
+            for (Operations.SetOpr setOpr : opr.oprs) {
+                int lv = u_level[setOpr.u_idx];
+                if (!levels[lv].density.containsKey(setOpr.t_idx)) {
+                    levels[lv].density.put(setOpr.t_idx, 1);
+                } else {
+                    levels[lv].density.replace(setOpr.t_idx, levels[lv].density.get(setOpr.t_idx) + 1);
+                }
+            }
+
+            for (DensityLevel level : levels) {
+                if (level != null) {
+                    level.tuples.remove(opr.t_idx);
+                    level.density.remove(opr.t_idx);
+                }
+            }
+
+            if (sol.containsKey(opr.t_idx))
+                delete(opr.t_idx, toBeMoved);
         }
 
         for (int t_idx : toBeMoved) {
@@ -159,22 +179,16 @@ public class SetCover {
     private void updateMapping(Operations opr) {
         if (opr.oprType == OprType.ADD) {
             mapping.put(opr.t_idx, new HashSet<>(opr.utilities));
-            for (Operations.SetOpr setOpr : opr.oprs) {
+            for (Operations.SetOpr setOpr : opr.oprs)
                 mapping.get(setOpr.t_idx).remove(setOpr.u_idx);
-            }
         } else if (opr.oprType == OprType.DEL) {
             mapping.remove(opr.t_idx);
             for (Operations.SetOpr setOpr : opr.oprs) {
-                if (!mapping.containsKey(setOpr.t_idx)) {
+                if (!mapping.containsKey(setOpr.t_idx))
                     mapping.put(setOpr.t_idx, new HashSet<>());
-                }
                 mapping.get(setOpr.t_idx).add(setOpr.u_idx);
             }
         }
-    }
-
-    private void insert(int t_idx, int u_idx) {
-
     }
 
     private void delete(int t_idx, int u_idx, int opr_idx, Set<Integer> toBeMoved, Set<Integer> unAssigned) {
@@ -221,6 +235,81 @@ public class SetCover {
 
                 for (int idx : instance.dualTree.uIdx.topKResults[u_idx].results) {
                     if (idx != opr_idx) {
+                        levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
+
+                        if (!levels[new_level].density.containsKey(idx))
+                            levels[new_level].density.put(idx, 1);
+                        else
+                            levels[new_level].density.replace(idx, levels[new_level].density.get(idx) + 1);
+                    }
+                }
+            }
+        }
+    }
+
+    private void delete(int opr_idx, Set<Integer> toBeMoved) {
+        SolInfo solInfo = sol.remove(opr_idx);
+
+        int s, l;
+        int old_level = solInfo.level_idx;
+        for (int u_idx : solInfo.cov) {
+            int new_level = -1, new_idx = -1, cand_size = 0;
+            for (int idx : instance.dualTree.uIdx.topKResults[u_idx].results) {
+                if (sol.containsKey(idx) && sol.get(idx).level_idx > new_level) {
+                    new_level = sol.get(idx).level_idx;
+                    new_idx = idx;
+                } else if (new_level == -1 && mapping.get(idx).size() > cand_size) {
+                    cand_size = mapping.get(idx).size();
+                    new_idx = idx;
+                }
+            }
+
+            if (new_level >= 0) {
+                if (new_level == old_level) {
+                    sol.get(new_idx).cov.add(u_idx);
+                    u_assign[u_idx] = new_idx;
+
+                    s = sol.get(new_idx).cov.size();
+                    l = sol.get(new_idx).level_idx;
+                    if (s > levels[l].high) {
+                        toBeMoved.add(new_idx);
+                    }
+                } else {
+                    sol.get(new_idx).cov.add(u_idx);
+                    u_assign[u_idx] = new_idx;
+                    u_level[u_idx] = new_level;
+
+                    s = sol.get(new_idx).cov.size();
+                    l = sol.get(new_idx).level_idx;
+                    if (s > levels[l].high) {
+                        toBeMoved.add(new_idx);
+                    }
+
+                    for (int idx : instance.dualTree.uIdx.topKResults[u_idx].results) {
+                        levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
+
+                        if (!levels[new_level].density.containsKey(idx))
+                            levels[new_level].density.put(idx, 1);
+                        else
+                            levels[new_level].density.replace(idx, levels[new_level].density.get(idx) + 1);
+                    }
+                }
+            } else {
+                SolInfo newSolInfo = new SolInfo(u_idx);
+                sol.put(new_idx, newSolInfo);
+
+                if (levels[newSolInfo.level_idx] == null) {
+                    levels[newSolInfo.level_idx] = new DensityLevel(newSolInfo.level_idx);
+                }
+
+                levels[newSolInfo.level_idx].tuples.add(new_idx);
+
+                u_assign[u_idx] = new_idx;
+                u_level[u_idx] = newSolInfo.level_idx;
+                new_level = u_level[u_idx];
+
+                if (new_level != old_level) {
+                    for (int idx : instance.dualTree.uIdx.topKResults[u_idx].results) {
                         levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                         if (!levels[new_level].density.containsKey(idx)) {
@@ -460,7 +549,7 @@ public class SetCover {
                 assert u_level[u_idx] == level_idx : "Error in u_level";
             }
         }
-        assert total_cov == Parameter.SAMPLE_SIZE : "Error in sol.cov";
+        assert total_cov == this.sample_size : "Error in sol.cov";
 
         for (DensityLevel level : levels) {
             if (level != null && level.tuples.isEmpty()) {
@@ -554,6 +643,12 @@ public class SetCover {
         SolInfo(Set<Integer> cov) {
             this.level_idx = (int) Math.floor(Math.log(cov.size()) / Math.log(2));
             this.cov = new HashSet<>(cov);
+        }
+
+        SolInfo(int u_idx) {
+            this.level_idx = 0;
+            this.cov = new HashSet<>();
+            this.cov.add(u_idx);
         }
     }
 }

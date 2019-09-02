@@ -11,12 +11,17 @@ public class KdTree {
     private int dim;
     private int capacity;
 
+    private int data_size, init_size;
+
     public boolean[] isDeleted;
     public double[][] data;
 
-    KdTree(int dim, int capacity) {
+    KdTree(int dim, int capacity, DualTree dualTree) {
         this.dim = dim;
         this.capacity = capacity;
+
+        this.data_size = dualTree.data_size;
+        this.init_size = dualTree.init_size;
 
         double[] min = new double[this.dim];
         double[] max = new double[this.dim];
@@ -28,17 +33,17 @@ public class KdTree {
         min[this.dim - 1] = 0;
         max[this.dim - 1] = Math.sqrt(this.dim - 1);
 
-        this.data = TupleGenerator.uniformGenerator(this.dim - 1, Parameter.DATA_SIZE);
-        this.isDeleted = new boolean[Parameter.DATA_SIZE];
-        for (int i = 0; i < Parameter.INIT_SIZE; i++) {
+        this.data = TupleGenerator.uniformGenerator(this.dim - 1, this.data_size);
+        this.isDeleted = new boolean[this.data_size];
+        for (int i = 0; i < this.init_size; i++) {
             this.isDeleted[i] = false;
         }
-        for (int i = Parameter.INIT_SIZE; i < Parameter.DATA_SIZE; i++) {
+        for (int i = this.init_size; i < this.data_size; i++) {
             this.isDeleted[i] = true;
         }
 
         List<Integer> tuples = new ArrayList<>();
-        for (int i = 0; i < Parameter.DATA_SIZE; i++) {
+        for (int i = 0; i < this.data_size; i++) {
             if (!isDeleted[i]) {
                 tuples.add(i);
             }
@@ -130,6 +135,9 @@ public class KdTree {
         PriorityQueue<RankItem> exactResult = new PriorityQueue<>();
         PriorityQueue<RankItem> approxResult = new PriorityQueue<>();
         for (int i = 0; i < data.length; i++) {
+            if (isDeleted[i])
+                continue;
+
             double score = VectorUtil.inner_product(u, data[i]);
             if (score > k_score) {
                 exactResult.offer(new RankItem(i, score));
@@ -379,29 +387,6 @@ public class KdTree {
         }
     }
 
-//    private static class Tuple {
-//        private int idx;
-//        private double[] values;
-//
-//        private Tuple(int idx, double[] values) {
-//            this.idx = idx;
-//            this.values = values;
-//        }
-//
-//        @Override
-//        public boolean equals(Object o) {
-//            if (this == o) return true;
-//            if (!(o instanceof Tuple)) return false;
-//            Tuple tuple = (Tuple) o;
-//            return idx == tuple.idx;
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return Objects.hash(idx);
-//        }
-//    }
-//
     private class CoordComp implements Comparator<Integer> {
 
         private int coord;

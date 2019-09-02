@@ -19,20 +19,18 @@ public class Operations {
         this.oprs = new ArrayList<>();
     }
 
-    public void print() {
-        System.out.print(t_idx + " ");
-        if (oprType == OprType.ADD) {
-            System.out.println("ADD");
-        } else {
-            System.out.println("DEL");
-        }
-        for (int u_idx : utilities) {
+    void print() {
+        if (oprType == OprType.ADD)
+            System.out.print("ADD ");
+        else
+            System.out.print("DEL ");
+
+        for (int u_idx : utilities)
             System.out.print(u_idx + " ");
-        }
-        System.out.println();
-        for (SetOpr opr : oprs) {
+        System.out.println(t_idx);
+
+        for (SetOpr opr : oprs)
             System.out.print(opr.t_idx + "," + opr.u_idx + " ");
-        }
         System.out.println();
     }
 
@@ -48,10 +46,10 @@ public class Operations {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof SetOpr)) return false;
+            if (!(o instanceof SetOpr))
+                return false;
             SetOpr setOpr = (SetOpr) o;
-            return t_idx == setOpr.t_idx &&
-                    u_idx == setOpr.u_idx;
+            return t_idx == setOpr.t_idx && u_idx == setOpr.u_idx;
         }
 
         @Override

@@ -1,27 +1,19 @@
 package utils;
 
-import structures.RankItem;
-
-import java.util.PriorityQueue;
-
 public class VectorUtil {
     public static double cosine(double[] p, double[] q) {
-        if (p.length != q.length)
-            System.err.println("dimension not equal");
-
+        assert p.length == q.length : "dimension not match";
         return inner_product(p, q) / (norm(p) * norm(q));
     }
 
     public static double cosine_diff(double cos1, double cos2) {
-        double sin1 = Math.sqrt(1 - cos1 * cos1);
-        double sin2 = Math.sqrt(1 - cos2 * cos2);
+        double sin1 = Math.sqrt(1.0 - cos1 * cos1);
+        double sin2 = Math.sqrt(1.0 - cos2 * cos2);
         return cos1 * cos2 + sin1 * sin2;
     }
 
     public static double cosine_unit(double[] p, double[] q) {
-        if (p.length != q.length)
-            System.err.println("dimension not equal");
-
+        assert p.length == q.length : "dimension not match";
         return inner_product(p, q);
     }
 
@@ -33,8 +25,7 @@ public class VectorUtil {
     }
 
     public static double dist(double[] p, double[] q) {
-        if (p.length != q.length)
-            System.err.println("dimension not equal");
+        assert p.length == q.length : "dimension not match";
 
         double sum = 0.0;
         for (int i = 0; i < p.length; i++) {
@@ -44,8 +35,7 @@ public class VectorUtil {
     }
 
     public static double dist2(double[] p, double[] q) {
-        if (p.length != q.length)
-            System.err.println("dimension not equal");
+        assert p.length == q.length : "dimension not match";
 
         double sum = 0.0;
         for (int i = 0; i < p.length; i++) {
@@ -55,8 +45,7 @@ public class VectorUtil {
     }
 
     public static double inner_product(double[] p, double[] q) {
-        if (p.length != q.length)
-            System.err.println("dimension not equal");
+        assert p.length == q.length : "dimension not match";
 
         double sum = 0.0;
         for (int i = 0; i < p.length; i++) {

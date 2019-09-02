@@ -1,21 +1,24 @@
 package structures;
 
-import utils.*;
+import utils.OprType;
+import utils.TupleOpr;
 
-public class MinSizeRMS {
+public class MinErrorRMS {
 
     public int dim;
     public int k;
+    public int r;
     public double eps;
 
     public DualTree dualTree;
-    public SetCover setCover;
+    public MaxInst maxInst;
 
     public int data_size, init_size, sample_size;
 
-    public MinSizeRMS(int dim, int k, double eps, int data_size, int init_size, int sample_size) {
+    public MinErrorRMS(int dim, int k, int r, double eps, int data_size, int init_size, int sample_size) {
         this.dim = dim;
         this.k = k;
+        this.r = r;
         this.eps = eps;
 
         this.data_size = data_size;
@@ -23,7 +26,7 @@ public class MinSizeRMS {
         this.sample_size = sample_size;
 
         this.dualTree = new DualTree(dim, k, eps, data_size, init_size, sample_size);
-        this.setCover = new SetCover(this);
+        this.maxInst = new MaxInst(r, this);
     }
 
     public void update(TupleOpr opr) {
@@ -34,6 +37,6 @@ public class MinSizeRMS {
             operations = dualTree.delete(opr.t_idx);
 
         operations.print();
-        setCover.update(operations);
+        maxInst.update(operations);
     }
 }

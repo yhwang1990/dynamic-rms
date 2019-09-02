@@ -1,16 +1,27 @@
 package structures;
 
 import utils.OprType;
-import utils.Parameter;
 
 public class DualTree {
 
     public KdTree tIdx;
     public ConeTree uIdx;
 
-    public DualTree(int dim, int k, double eps) {
-        this.tIdx = new KdTree(dim + 1, Parameter.LEAF_SIZE);
-        this.uIdx = new ConeTree(dim + 1, k, eps, Parameter.TAU, this);
+    int data_size, init_size, sample_size;
+
+    private int leaf_size;
+    private double tau;
+
+    public DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size) {
+        this.leaf_size = Math.max(5, 2 * k);
+        this.tau = 0.99;
+
+        this.data_size = data_size;
+        this.init_size = init_size;
+        this.sample_size = sample_size;
+
+        this.tIdx = new KdTree(dim + 1, this.leaf_size, this);
+        this.uIdx = new ConeTree(dim + 1, k, eps, this.tau, this);
     }
 
     public Operations insert(int t_idx) {
