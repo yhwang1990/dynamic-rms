@@ -24,10 +24,11 @@ public class Operations {
             System.out.print("ADD ");
         else
             System.out.print("DEL ");
+        System.out.println(t_idx);
 
         for (int u_idx : utilities)
             System.out.print(u_idx + " ");
-        System.out.println(t_idx);
+        System.out.println();
 
         for (SetOpr opr : oprs)
             System.out.print(opr.t_idx + "," + opr.u_idx + " ");

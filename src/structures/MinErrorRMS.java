@@ -36,7 +36,7 @@ public class MinErrorRMS {
         else
             operations = dualTree.delete(opr.t_idx);
 
-        operations.print();
+//        operations.print();
         maxInst.update(operations);
     }
 }

@@ -363,7 +363,7 @@ public class SetCover {
         int unstable_level = levels.length - 1;
         while (unstable_level >= 0) {
             int unstable_idx = -1;
-            for (int level_idx = levels.length - 1; level_idx >= 0; level_idx--) {
+            for (int level_idx = unstable_level; level_idx >= 0; level_idx--) {
                 if (levels[level_idx] == null)
                     continue;
                 for (Map.Entry<Integer, Integer> entry : levels[level_idx].density.entrySet()) {
@@ -470,6 +470,7 @@ public class SetCover {
                 for (int t_idx : canMove) {
                     move(t_idx);
                 }
+                unstable_level = sol.get(unstable_idx).level_idx;
             }
         }
     }
