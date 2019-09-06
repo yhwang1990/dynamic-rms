@@ -1,3 +1,5 @@
+package data;
+
 import generators.TupleGenerator;
 
 import java.io.BufferedWriter;
@@ -8,9 +10,13 @@ import java.text.DecimalFormat;
 public class DataGenerator {
 
     public static void main(String[] args) {
-        double[][] data = generateIndep10D(1_000_000);
-        for (int dim = 3; dim <= 10; dim++) {
-            writeToFile("indep_" + dim + "d.txt", data, dim);
+//        double[][] data = generateIndep10D(1_000_000);
+//        for (int dim = 2; dim <= 10; dim++) {
+//            writeToFile("Indep_" + dim + "d.txt", data, dim);
+//        }
+        for (int dim = 2; dim <= 10; dim++) {
+            double[][] data = generateAnti(1_000_000, dim);
+            writeToFile("AntiCorr_" + dim + "d.txt", data, dim);
         }
     }
 
@@ -50,10 +56,10 @@ public class DataGenerator {
         return data;
     }
 
-    private static double[][] generateAnti10D(int size) {
-        double[][] data = new double[size][10];
+    private static double[][] generateAnti(int size, int dim) {
+        double[][] data = new double[size][dim];
         for (int i = 0; i < size; i++) {
-            TupleGenerator.generateAnti(10, data[i]);
+            TupleGenerator.generateAnti(dim, data[i]);
         }
         return data;
     }
