@@ -10,14 +10,16 @@ import java.text.DecimalFormat;
 public class DataGenerator {
 
     public static void main(String[] args) {
-//        double[][] data = generateIndep10D(1_000_000);
-//        for (int dim = 2; dim <= 10; dim++) {
-//            writeToFile("Indep_" + dim + "d.txt", data, dim);
-//        }
+        /*
+        double[][] data = generateIndep10D(1_000_000);
+        for (int dim = 2; dim <= 10; dim++) {
+            writeToFile("Indep_" + dim + "d.txt", data, dim);
+        }
         for (int dim = 2; dim <= 10; dim++) {
             double[][] data = generateAnti(1_000_000, dim);
             writeToFile("AntiCorr_" + dim + "d.txt", data, dim);
         }
+        */
     }
 
     private static void writeToFile(String filename, double[][] data, int dim) {

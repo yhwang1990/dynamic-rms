@@ -1,7 +1,5 @@
 package structures;
 
-import utils.OprType;
-
 import java.util.*;
 
 public class SetCover {
@@ -97,7 +95,7 @@ public class SetCover {
         updateMapping(opr);
 
         Set<Integer> toBeMoved = new HashSet<>();
-        if (opr.oprType == OprType.ADD) {
+        if (opr.oprType > 0) {
             for (Operations.SetOpr setOpr : opr.oprs) {
                 int lv = u_level[setOpr.u_idx];
                 int old_density = levels[lv].density.get(setOpr.t_idx);
@@ -148,7 +146,7 @@ public class SetCover {
                     levels[lv].density.replace(opr.t_idx, levels[lv].density.get(opr.t_idx) + 1);
                 }
             }
-        } else if (opr.oprType == OprType.DEL) {
+        } else if (opr.oprType < 0) {
             for (Operations.SetOpr setOpr : opr.oprs) {
                 int lv = u_level[setOpr.u_idx];
                 if (!levels[lv].density.containsKey(setOpr.t_idx)) {
@@ -176,11 +174,11 @@ public class SetCover {
     }
 
     private void updateMapping(Operations opr) {
-        if (opr.oprType == OprType.ADD) {
+        if (opr.oprType > 0) {
             mapping.put(opr.t_idx, new HashSet<>(opr.utilities));
             for (Operations.SetOpr setOpr : opr.oprs)
                 mapping.get(setOpr.t_idx).remove(setOpr.u_idx);
-        } else if (opr.oprType == OprType.DEL) {
+        } else if (opr.oprType < 0) {
             mapping.remove(opr.t_idx);
             for (Operations.SetOpr setOpr : opr.oprs) {
                 if (!mapping.containsKey(setOpr.t_idx))

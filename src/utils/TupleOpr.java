@@ -1,10 +1,10 @@
 package utils;
 
 public class TupleOpr {
-    public OprType oprType;
     public int t_idx;
+    public int oprType;
 
-    public TupleOpr(int t_idx, OprType oprType) {
+    public TupleOpr(final int t_idx, final int oprType) {
         this.t_idx = t_idx;
         this.oprType = oprType;
     }

@@ -28,7 +28,7 @@ public class MinSizeRMS {
 
     public void update(TupleOpr opr) {
         Operations operations;
-        if (opr.oprType == OprType.ADD)
+        if (opr.oprType > 0)
             operations = dualTree.insert(opr.t_idx);
         else
             operations = dualTree.delete(opr.t_idx);

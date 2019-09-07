@@ -1,17 +1,15 @@
 package structures;
 
-import utils.OprType;
-
 import java.util.*;
 
-public class Operations {
-    int t_idx;
-    OprType oprType;
+class Operations {
+    final int t_idx;
+    final int oprType;
 
     List<Integer> utilities;
     List<SetOpr> oprs;
 
-    Operations(int t_idx, OprType oprType) {
+    Operations(final int t_idx, final int oprType) {
         this.t_idx = t_idx;
         this.oprType = oprType;
 
@@ -20,7 +18,7 @@ public class Operations {
     }
 
     void print() {
-        if (oprType == OprType.ADD)
+        if (oprType > 0)
             System.out.print("ADD ");
         else
             System.out.print("DEL ");
@@ -36,10 +34,10 @@ public class Operations {
     }
 
     static class SetOpr {
-        int t_idx;
-        int u_idx;
+        final int t_idx;
+        final int u_idx;
 
-        SetOpr(int t_idx, int u_idx) {
+        SetOpr(final int t_idx, final int u_idx) {
             this.t_idx = t_idx;
             this.u_idx = u_idx;
         }

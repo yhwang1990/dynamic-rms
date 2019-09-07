@@ -1,7 +1,5 @@
 package structures;
 
-import utils.OprType;
-
 public class DualTree {
 
     public KdTree tIdx;
@@ -25,7 +23,7 @@ public class DualTree {
     }
 
     public Operations insert(int t_idx) {
-        Operations opr = new Operations(t_idx, OprType.ADD);
+        Operations opr = new Operations(t_idx, 1);
         boolean is_inserted = tIdx.insert(t_idx);
         if (!is_inserted) {
             System.err.println("Insert " + t_idx + " failed");
@@ -36,7 +34,7 @@ public class DualTree {
     }
 
     public Operations delete(int t_idx) {
-        Operations opr = new Operations(t_idx, OprType.DEL);
+        Operations opr = new Operations(t_idx, -1);
         boolean is_deleted = tIdx.delete(t_idx);
         if (!is_deleted) {
             System.err.println("Delete " + t_idx + " failed");
