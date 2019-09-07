@@ -1,6 +1,5 @@
 package structures;
 
-import generators.UtilityGenerator;
 import utils.*;
 
 import java.util.*;
@@ -15,10 +14,8 @@ public class ConeTree {
     private double eps;
     private double tau;
 
-    private int sample_size;
-
-    public double[][] samples;
-    public TopKResult[] topKResults;
+    private double[][] samples;
+    TopKResult[] topKResults;
 
     ConeTree(int dim, int k, double eps, double tau, DualTree dualTree) {
         this.dim = dim;
@@ -28,17 +25,17 @@ public class ConeTree {
         this.tau = tau;
         this.dualTree = dualTree;
 
-        this.sample_size = dualTree.sample_size;
+        int sample_size = dualTree.sample_size;
 
-        this.samples = UtilityGenerator.uniformGenerator(this.dim - 1, this.sample_size);
+        this.samples = dualTree.samples;
 
-        this.topKResults = new TopKResult[this.sample_size];
-        for (int i = 0; i < this.sample_size; i++) {
+        this.topKResults = new TopKResult[sample_size];
+        for (int i = 0; i < sample_size; i++) {
             this.topKResults[i] = this.dualTree.tIdx.approxTopKSearch(this.k, this.eps, this.samples[i]);
         }
 
         List<Integer> utilities = new ArrayList<>();
-        for (int i = 0; i < this.sample_size; i++) {
+        for (int i = 0; i < sample_size; i++) {
             utilities.add(i);
         }
 

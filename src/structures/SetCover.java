@@ -4,7 +4,7 @@ import java.util.*;
 
 public class SetCover {
 
-    public Map<Integer, HashSet<Integer>> mapping;
+    private Map<Integer, HashSet<Integer>> mapping;
 
     private DensityLevel[] levels;
 
@@ -17,9 +17,9 @@ public class SetCover {
 
     private Map<Integer, SolInfo> sol;
 
-    SetCover(MinSizeRMS msInst) {
+    SetCover(int sample_size, MinSizeRMS msInst) {
         this.msInst = msInst;
-        this.sample_size = msInst.sample_size;
+        this.sample_size = sample_size;
 
         // construct initial mapping
         this.mapping = new HashMap<>();
@@ -53,7 +53,7 @@ public class SetCover {
             rankSetList.add(new RankSet(entry.getKey(), entry.getValue()));
         }
 
-        while (cov_size < this.sample_size) {
+        while (cov_size < sample_size) {
             rankSetList.sort(new RankSetComparator());
             RankSet next = rankSetList.get(0);
             SolInfo solInfo = new SolInfo(next);
@@ -93,6 +93,11 @@ public class SetCover {
             return;
 
         updateMapping(opr);
+
+        if (opr.utilities.size() > 0.01 * sample_size) {
+            reconstruct();
+            return;
+        }
 
         Set<Integer> toBeMoved = new HashSet<>();
         if (opr.oprType > 0) {
@@ -473,6 +478,17 @@ public class SetCover {
         }
     }
 
+    private void reconstruct() {
+        int maxLevel = (int) (Math.log(sample_size) / Math.log(2)) + 1;
+        levels = new DensityLevel[maxLevel];
+
+        u_assign = new int[sample_size];
+        u_level = new int[sample_size];
+
+        sol = new HashMap<>();
+        greedySetCover();
+    }
+
     public void printDetails() {
         System.out.println("Solution:");
         for (int t_idx : sol.keySet()) {
@@ -570,23 +586,7 @@ public class SetCover {
         System.out.println("No error found");
     }
 
-    /*
-    private void printDensity() {
-        System.out.println("###############################");
-        for (int i = 0; i < levels.length; i++) {
-            if (levels[i] != null) {
-                System.out.println("Level " + i);
-                for (Map.Entry<Integer, Integer> entry : levels[i].density.entrySet()) {
-                    System.out.print(entry.getKey() + "," + entry.getValue() + " ");
-                }
-                System.out.println();
-            }
-        }
-        System.out.println("###############################");
-    }
-    */
-
-    public Set<Integer> result() {
+    Set<Integer> result() {
         return sol.keySet();
     }
 

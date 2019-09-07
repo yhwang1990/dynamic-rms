@@ -1,8 +1,6 @@
 package structures;
 
-import generators.TupleGenerator;
 import utils.*;
-
 import java.util.*;
 
 public class KdTree {
@@ -11,17 +9,15 @@ public class KdTree {
     private int dim;
     private int capacity;
 
-    private int data_size, init_size;
-
-    public boolean[] isDeleted;
-    public double[][] data;
+    private boolean[] isDeleted;
+    double[][] data;
 
     KdTree(int dim, int capacity, DualTree dualTree) {
         this.dim = dim;
         this.capacity = capacity;
 
-        this.data_size = dualTree.data_size;
-        this.init_size = dualTree.init_size;
+        int data_size = dualTree.data_size;
+        int init_size = dualTree.init_size;
 
         double[] min = new double[this.dim];
         double[] max = new double[this.dim];
@@ -33,17 +29,18 @@ public class KdTree {
         min[this.dim - 1] = 0;
         max[this.dim - 1] = Math.sqrt(this.dim - 1);
 
-        this.data = TupleGenerator.uniformGenerator(this.dim - 1, this.data_size);
-        this.isDeleted = new boolean[this.data_size];
-        for (int i = 0; i < this.init_size; i++) {
+        this.data = dualTree.data;
+
+        this.isDeleted = new boolean[data_size];
+        for (int i = 0; i < init_size; i++) {
             this.isDeleted[i] = false;
         }
-        for (int i = this.init_size; i < this.data_size; i++) {
+        for (int i = init_size; i < data_size; i++) {
             this.isDeleted[i] = true;
         }
 
         List<Integer> tuples = new ArrayList<>();
-        for (int i = 0; i < this.data_size; i++) {
+        for (int i = 0; i < data_size; i++) {
             if (!isDeleted[i]) {
                 tuples.add(i);
             }
