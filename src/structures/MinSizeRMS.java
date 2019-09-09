@@ -1,7 +1,7 @@
 package structures;
 
 import main.Main;
-import utils.*;
+import utils.TupleOpr;
 
 import java.util.Set;
 

@@ -5,27 +5,33 @@ import java.util.stream.Collectors;
 
 public class MaxInst {
 
-    private int r, mr;
+    private final double TAU = 0.1;
+
+    private int r, mr, max_mr;
     private Map<Integer, HashSet<Integer>> mapping;
 
     private MinErrorRMS mrInst;
     private SetCoverR scr;
 
-    MaxInst(int r, MinErrorRMS mrInst) {
+    MaxInst(int r, int max_mr, MinErrorRMS mrInst) {
         this.r = r;
         this.mrInst = mrInst;
+        this.max_mr = max_mr;
         this.scr = new SetCoverR();
-        System.out.println("mr_init=" + mr);
     }
 
     void update(Operations opr) {
-        System.out.println("mr_before=" + mr);
         if (opr.utilities.isEmpty())
             return;
         Operations filterOpr = filter(opr);
         if (filterOpr.utilities.isEmpty())
             return;
         updateMapping(filterOpr);
+
+        if (filterOpr.utilities.size() > TAU * mr) {
+            scr = new SetCoverR();
+            return;
+        }
 
         scr.update(filterOpr);
 
@@ -35,20 +41,18 @@ public class MaxInst {
                 mr -= 1;
             } while (scr.sol.size() > r);
         } else {
-            while ((scr.sol.size() < r && mr < mrInst.sample_size) || (scr.sol.size() == r && mr < mrInst.sample_size && scr.canAdd(mr))) {
+            while ((scr.sol.size() < r && mr < max_mr) || (scr.sol.size() == r && mr < max_mr && scr.canAdd(mr))) {
                 scr.add(mr);
                 mr += 1;
             }
             if (scr.sol.size() > r) {
-                System.out.println("Rebuild is called");
-                scr = new SetCoverR(true);
+                scr = new SetCoverR(mr);
                 while (scr.sol.size() > r) {
                     scr.delete(mr - 1);
                     mr -= 1;
                 }
             }
         }
-        System.out.println("mr_after=" + mr);
     }
 
     private Operations filter(Operations opr) {
@@ -81,7 +85,7 @@ public class MaxInst {
         scr.validate();
     }
 
-    public Set<Integer> result() {
+    Set<Integer> result() {
         return scr.sol.keySet();
     }
 
@@ -102,7 +106,7 @@ public class MaxInst {
         private Map<Integer, SolInfo> sol;
 
         private SetCoverR() {
-            int left = r, right = mrInst.sample_size;
+            int left = r, right = max_mr;
             while (right > left) {
                 if (left >= right - 1) {
                     if (testSetCover(right)) {
@@ -120,6 +124,8 @@ public class MaxInst {
                 else
                     right = mid - 1;
             }
+            if (mr == 0)
+                mr = left;
 
             mapping = new HashMap<>();
             for (int u_idx = 0; u_idx < mr; u_idx++) {
@@ -133,13 +139,13 @@ public class MaxInst {
                 }
             }
 
-            int maxLevel = (int) (Math.log(mrInst.sample_size) / Math.log(2)) + 1;
+            int maxLevel = (int) (Math.log(max_mr) / Math.log(2)) + 1;
             levels = new DensityLevel[maxLevel];
 
-            u_assign = new int[mrInst.sample_size];
-            u_level = new int[mrInst.sample_size];
+            u_assign = new int[max_mr];
+            u_level = new int[max_mr];
 
-            for (int u_idx = mr; u_idx < mrInst.sample_size; u_idx++) {
+            for (int u_idx = mr; u_idx < max_mr; u_idx++) {
                 u_assign[u_idx] = -1;
                 u_level[u_idx] = -1;
             }
@@ -148,7 +154,8 @@ public class MaxInst {
             greedySetCover();
         }
 
-        private SetCoverR(boolean rebuild) {
+        private SetCoverR(int default_mr) {
+            mr = default_mr;
             mapping = new HashMap<>();
             for (int u_idx = 0; u_idx < mr; u_idx++) {
                 for (int t_idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
@@ -161,13 +168,13 @@ public class MaxInst {
                 }
             }
 
-            int maxLevel = (int) (Math.log(mrInst.sample_size) / Math.log(2)) + 1;
+            int maxLevel = (int) (Math.log(max_mr) / Math.log(2)) + 1;
             levels = new DensityLevel[maxLevel];
 
-            u_assign = new int[mrInst.sample_size];
-            u_level = new int[mrInst.sample_size];
+            u_assign = new int[max_mr];
+            u_level = new int[max_mr];
 
-            for (int u_idx = mr; u_idx < mrInst.sample_size; u_idx++) {
+            for (int u_idx = mr; u_idx < max_mr; u_idx++) {
                 u_assign[u_idx] = -1;
                 u_level[u_idx] = -1;
             }

@@ -49,6 +49,34 @@ public class KdTree {
         this.root = new KdNode(min, max, tuples);
     }
 
+    public KdTree(int dim, int capacity, double[][] data) {
+        this.dim = dim;
+        this.capacity = capacity;
+
+        this.data = data;
+
+        double[] min = new double[this.dim];
+        double[] max = new double[this.dim];
+
+        for (int i = 0; i < this.dim - 1; i++) {
+            min[i] = 0;
+            max[i] = 1;
+        }
+        min[this.dim - 1] = 0;
+        max[this.dim - 1] = Math.sqrt(this.dim - 1);
+
+        this.isDeleted = new boolean[this.data.length];
+        for (int i = 0; i < this.data.length; i++)
+            this.isDeleted[i] = false;
+
+        List<Integer> tuples = new ArrayList<>();
+        for (int i = 0; i < this.data.length; i++)
+            if (!isDeleted[i])
+                tuples.add(i);
+
+        this.root = new KdNode(min, max, tuples);
+    }
+
     boolean insert(int t_idx) {
         boolean isUpdated = false;
         if (isDeleted[t_idx]) {
@@ -127,37 +155,69 @@ public class KdTree {
         return result;
     }
 
-    public void bruteForceTopK(int k, double eps, double[] u) {
+    public List<RankItem> exactTopK(int k, double[] u) {
         double k_score = 0.0;
-        PriorityQueue<RankItem> exactResult = new PriorityQueue<>();
-        PriorityQueue<RankItem> approxResult = new PriorityQueue<>();
-        for (int i = 0; i < data.length; i++) {
-            if (isDeleted[i])
-                continue;
+        PriorityQueue<RankItem> exact_result = new PriorityQueue<>();
 
-            double score = VectorUtil.inner_product(u, data[i]);
+        KdNode best_node = root;
+        while (best_node.nodeType != NodeType.LEAF) {
+            if (VectorUtil.pointInRect(u, best_node.lc.lb, best_node.lc.hb))
+                best_node = best_node.lc;
+            else
+                best_node = best_node.rc;
+        }
+
+        for (int t_idx : best_node.tuples) {
+            double score = VectorUtil.inner_product(u, data[t_idx]);
             if (score > k_score) {
-                exactResult.offer(new RankItem(i, score));
-                if (! exactResult.isEmpty() && exactResult.size() == k) {
-                    k_score = exactResult.peek().score;
-                } else if (! exactResult.isEmpty() && exactResult.size() > k) {
-                    RankItem deleted_item = exactResult.poll();
-                    if (! exactResult.isEmpty()) {
-                        k_score = exactResult.peek().score;
-                    }
-
-                    if (deleted_item.score >= (1 - eps) * k_score) {
-                        approxResult.offer(deleted_item);
-                    }
-
-                    while(! approxResult.isEmpty() && approxResult.peek().score < (1 - eps) * k_score) {
-                        approxResult.poll();
-                    }
+                exact_result.offer(new RankItem(t_idx, score));
+                if (! exact_result.isEmpty() && exact_result.size() == k) {
+                    k_score = exact_result.peek().score;
+                } else if (! exact_result.isEmpty() && exact_result.size() > k) {
+                    exact_result.poll();
+                    if (! exact_result.isEmpty())
+                        k_score = exact_result.peek().score;
                 }
-            } else if (score >= (1 - eps) * k_score) {
-                approxResult.offer(new RankItem(i, score));
             }
         }
+
+        double min_dist = Double.MAX_VALUE;
+        if (k_score > 0)
+            min_dist = VectorUtil.prod2dist(dim - 1, k_score);
+
+        PriorityQueue<RandNode> queue = new PriorityQueue<>();
+        queue.offer(new RandNode(root, 0.0));
+        while (!queue.isEmpty() && queue.peek().dist2 <= min_dist) {
+            KdNode cur_node = queue.poll().node;
+            if (cur_node.nodeType == NodeType.LEAF) {
+                if (cur_node == best_node)
+                    continue;
+                for (int t_idx : cur_node.tuples) {
+                    double score = VectorUtil.inner_product(u, data[t_idx]);
+                    if (score > k_score) {
+                        exact_result.offer(new RankItem(t_idx, score));
+                        if (! exact_result.isEmpty() && exact_result.size() == k) {
+                            k_score = exact_result.peek().score;
+                        } else if (! exact_result.isEmpty() && exact_result.size() > k) {
+                            exact_result.poll();
+                            if (! exact_result.isEmpty())
+                                k_score = exact_result.peek().score;
+                        }
+                    }
+                    min_dist = VectorUtil.prod2dist(dim - 1, k_score);
+                }
+            } else {
+                double l_dist2 = VectorUtil.dist2Rect(u, cur_node.lc.lb, cur_node.lc.hb);
+                if (l_dist2 <= min_dist) {
+                    queue.offer(new RandNode(cur_node.lc, l_dist2));
+                }
+                double r_dist2 = VectorUtil.dist2Rect(u, cur_node.rc.lb, cur_node.rc.hb);
+                if (r_dist2 <= min_dist) {
+                    queue.offer(new RandNode(cur_node.rc, r_dist2));
+                }
+            }
+        }
+        return new ArrayList<>(exact_result);
     }
 
     public void BFSTraverse() {

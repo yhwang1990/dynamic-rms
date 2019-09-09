@@ -2,9 +2,7 @@ package data;
 
 import generators.UtilityGenerator;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.text.DecimalFormat;
 
 public class TestGenerator {

@@ -4,6 +4,8 @@ import java.util.*;
 
 public class SetCover {
 
+    private final double TAU = 0.02;
+
     private Map<Integer, HashSet<Integer>> mapping;
 
     private DensityLevel[] levels;
@@ -94,7 +96,7 @@ public class SetCover {
 
         updateMapping(opr);
 
-        if (opr.utilities.size() > 0.01 * sample_size) {
+        if (opr.utilities.size() > TAU * sample_size) {
             reconstruct();
             return;
         }
