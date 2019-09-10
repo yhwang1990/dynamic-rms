@@ -4,7 +4,7 @@ import java.util.*;
 
 public class SetCover {
 
-    private final double TAU = 0.02;
+    private final double TAU = 0.025;
 
     private Map<Integer, HashSet<Integer>> mapping;
 

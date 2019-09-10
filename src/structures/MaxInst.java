@@ -29,11 +29,10 @@ public class MaxInst {
         updateMapping(filterOpr);
 
         if (filterOpr.utilities.size() > TAU * mr) {
-            scr = new SetCoverR();
-            return;
+            scr = new SetCoverR(mr);
+        } else {
+            scr.update(filterOpr);
         }
-
-        scr.update(filterOpr);
 
         if (scr.sol.size() > r) {
             do {
@@ -154,8 +153,9 @@ public class MaxInst {
             greedySetCover();
         }
 
-        private SetCoverR(int default_mr) {
-            mr = default_mr;
+        private SetCoverR(int resetMr) {
+            mr = resetMr;
+
             mapping = new HashMap<>();
             for (int u_idx = 0; u_idx < mr; u_idx++) {
                 for (int t_idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
