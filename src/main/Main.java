@@ -12,7 +12,7 @@ import java.util.*;
 
 public class Main {
 
-    public static double cTime = 0.0, itTime = 0.0, isTime = 0.0, dtTime = 0.0, dsTime = 0.0;
+    public static double InitTime = 0.0, AddTreeTime = 0.0, AddSetTime = 0.0, DelTreeTime = 0.0, DelSetTime = 0.0;
 
     public static void main(String[] args) {
         if (args.length < 2 || args.length > 4)
@@ -30,38 +30,39 @@ public class Main {
         int k = Integer.parseInt(args[1]);
         double eps = Double.parseDouble(args[2]);
 
-        String resultFile = "results/min_size_tuples_001.txt";
-        String timeFile = "results/min_size_time_001.txt";
+        String resultFile = "results/contRMS_min_size_tuples.txt";
+        String timeFile = "results/contRMS_min_size_time.txt";
 
         BufferedWriter wr_result = null, wr_time = null;
         try {
-            wr_result = new BufferedWriter(new FileWriter(resultFile));
-            wr_time = new BufferedWriter(new FileWriter(timeFile));
+            wr_result = new BufferedWriter(new FileWriter(resultFile, true));
+            wr_time = new BufferedWriter(new FileWriter(timeFile, true));
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(0);
         }
 
         double[][] data = readDataFile(filePath);
+
         if (data == null) {
-            System.err.println("error in reading data file");
+            System.err.println("error in reading dataset");
             System.exit(0);
         }
+
         int data_size = data.length, dim = data[0].length - 1;
         int init_size = data_size / 2;
 
         int[] toBeDeleted = readWorkload(filePath);
         if (toBeDeleted == null) {
-            System.err.println("error in reading workload file");
+            System.err.println("error in reading workload");
             System.exit(0);
         }
 
         int sample_size = decideSampleSize(dim);
-
         double[][] samples = readUtilFile(dim, sample_size);
 
         if (samples == null) {
-            System.err.println("error in reading sample file");
+            System.err.println("error in reading samples");
             System.exit(0);
         }
 
@@ -77,7 +78,7 @@ public class Main {
         writeHeader(wr_time, args);
 
         try {
-            wr_time.write("initTime=" + Math.round(cTime) + "\n");
+            wr_time.write("initTime=" + Math.round(InitTime) + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -90,17 +91,15 @@ public class Main {
                 writeTime(wr_time, output_id);
                 writeResult(wr_result, output_id, inst);
                 output_id += 1;
+
+                try {
+                    wr_result.flush();
+                    wr_time.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
-
-        try {
-            wr_result.flush();
-            wr_time.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        resetTime();
 
         try {
             wr_result.close();
@@ -129,21 +128,23 @@ public class Main {
         }
 
         double[][] data = readDataFile(filePath);
+
         if (data == null) {
             System.err.println("error in reading data file");
             System.exit(0);
         }
+
         int data_size = data.length, dim = data[0].length - 1;
         int init_size = data_size / 2;
 
         int[] toBeDeleted = readWorkload(filePath);
+
         if (toBeDeleted == null) {
             System.err.println("error in reading workload file");
             System.exit(0);
         }
 
         int sample_size = decideSampleSize(dim);
-
         double[][] samples = readUtilFile(dim, sample_size);
 
         if (samples == null) {
@@ -163,7 +164,7 @@ public class Main {
         writeHeader(wr_time, args);
 
         try {
-            wr_time.write("initTime=" + Math.round(cTime) + "\n");
+            wr_time.write("initTime=" + Math.round(InitTime) + "\n");
             wr_time.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -198,8 +199,14 @@ public class Main {
     private static void runTest(String dataFile, String resultFile) {
         DecimalFormat df = new DecimalFormat("0.000000");
         double[][] data = readDataFile(dataFile);
-        assert data != null;
+
+        if (data == null) {
+            System.err.println("error in reading data file");
+            System.exit(0);
+        }
+
         double[][] tests = readTestFile(data[0].length - 1);
+
         try {
             BufferedReader br = new BufferedReader(new FileReader(resultFile));
             BufferedWriter bw = new BufferedWriter(new FileWriter("./result/min_size_results_00.txt"));
@@ -233,7 +240,7 @@ public class Main {
                         readValidFile(dataFile.substring(0, dataFile.length() - 4) + "_rst_" + i + ".txt", k, topK, top1, top5, top10);
 
                         double[] rmsTop1 = new double[1_000_000];
-                        assert tests != null;
+
                         computeRMSTop1(data, results, tests, rmsTop1);
 
                         double mrr = computeMrr(rmsTop1, topK);
@@ -430,11 +437,11 @@ public class Main {
     }
 
     private static void resetTime() {
-        cTime = 0.0;
-        itTime = 0.0;
-        isTime = 0.0;
-        dtTime = 0.0;
-        dsTime = 0.0;
+        InitTime = 0.0;
+        AddTreeTime = 0.0;
+        AddSetTime = 0.0;
+        DelTreeTime = 0.0;
+        DelSetTime = 0.0;
     }
 
     private static void writeResult(BufferedWriter wr, int idx, MinSizeRMS inst) {
@@ -462,10 +469,10 @@ public class Main {
     private static void writeTime(BufferedWriter wr, int idx) {
         try {
             wr.write("idx=" + idx + " ");
-            wr.write(Math.round(itTime) + " ");
-            wr.write(Math.round(isTime) + " ");
-            wr.write(Math.round(dtTime) + " ");
-            wr.write(Math.round(dsTime) + "\n");
+            wr.write(Math.round(AddTreeTime) + " ");
+            wr.write(Math.round(AddSetTime) + " ");
+            wr.write(Math.round(DelTreeTime) + " ");
+            wr.write(Math.round(DelSetTime) + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }

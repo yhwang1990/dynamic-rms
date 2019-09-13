@@ -12,7 +12,7 @@ import java.util.List;
 
 public class Data4Baseline {
     public static void main(String[] args) {
-        generateData4Baseline("./datasets/NBA.txt");
+        generateData4Baseline(args[0]);
     }
 
     private static void generateData4Baseline(String dataPath) {

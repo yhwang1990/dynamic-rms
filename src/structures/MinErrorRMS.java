@@ -17,7 +17,7 @@ public class MinErrorRMS {
         this.maxInst = new MaxInst(r, sample_size, this);
 
         long t1 = System.nanoTime();
-        Main.cTime += (t1 - t0) / 1e6;
+        Main.InitTime += (t1 - t0) / 1e6;
     }
 
     public void update(TupleOpr opr) {
@@ -36,11 +36,11 @@ public class MinErrorRMS {
         long t2 = System.nanoTime();
 
         if (opr.oprType > 0) {
-            Main.itTime += (t1 - t0) / 1e6;
-            Main.isTime += (t2 - t1) / 1e6;
+            Main.AddTreeTime += (t1 - t0) / 1e6;
+            Main.AddSetTime += (t2 - t1) / 1e6;
         } else {
-            Main.dtTime += (t1 - t0) / 1e6;
-            Main.dsTime += (t2 - t1) / 1e6;
+            Main.DelTreeTime += (t1 - t0) / 1e6;
+            Main.DelSetTime += (t2 - t1) / 1e6;
         }
     }
 
