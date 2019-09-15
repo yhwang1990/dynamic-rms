@@ -32,3 +32,5 @@ out/
 /test/
 /result/
 /dataset/
+/.classpath
+/.project
