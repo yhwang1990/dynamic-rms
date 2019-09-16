@@ -74,6 +74,7 @@ public class Main {
 			for (int scale = 1; scale <= 10; scale++) {
 				double eps = scale * 0.001;
 				int sample_size = (int) (max_sample_size * 0.001 / eps);
+				System.out.println(eps + " " + sample_size);
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
 				writeHeader(wr_result, filePath, k, eps);
 				writeHeader(wr_time, filePath, k, eps);
@@ -102,6 +103,7 @@ public class Main {
 			for (int scale = 2; scale <= 10; scale++) {
 				double eps = scale * 0.01;
 				int sample_size = (int) (max_sample_size * 0.001 / eps);
+				System.out.println(eps + " " + sample_size);
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
 				writeHeader(wr_result, filePath, k, eps);
 				writeHeader(wr_time, filePath, k, eps);
