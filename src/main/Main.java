@@ -93,36 +93,39 @@ public class Main {
 					}
 				}
 				resetTime();
+				
+				inst = null;
+				System.gc();
 			}
 
-			for (int scale = 2; scale <= 10; scale++) {
-				double eps = scale * 0.01;
-				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-				writeHeader(wr_result, filePath, k, eps);
-				writeHeader(wr_time, filePath, k, eps);
-
-				try {
-					wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
-							+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-				int interval = workLoad.size() / 10;
-				int output_id = 0;
-				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-					inst.update(workLoad.get(opr_id));
-					if (opr_id % interval == interval - 1) {
-						writeTime(wr_time, output_id);
-						writeResult(wr_result, output_id, inst, data);
-						output_id += 1;
-
-						wr_result.flush();
-						wr_time.flush();
-					}
-				}
-				resetTime();
-			}
+//			for (int scale = 2; scale <= 10; scale++) {
+//				double eps = scale * 0.01;
+//				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
+//				writeHeader(wr_result, filePath, k, eps);
+//				writeHeader(wr_time, filePath, k, eps);
+//
+//				try {
+//					wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
+//							+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//
+//				int interval = workLoad.size() / 10;
+//				int output_id = 0;
+//				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+//					inst.update(workLoad.get(opr_id));
+//					if (opr_id % interval == interval - 1) {
+//						writeTime(wr_time, output_id);
+//						writeResult(wr_result, output_id, inst, data);
+//						output_id += 1;
+//
+//						wr_result.flush();
+//						wr_time.flush();
+//					}
+//				}
+//				resetTime();
+//			}
 		}
 		wr_result.close();
 		wr_time.close();
@@ -170,7 +173,7 @@ public class Main {
 		for (int k = 1; k <= 1; k++) {
 			boolean flag = false;
 			for (int r = 5; r <= 10; r += 5) {
-				for (int scale = 1; scale <= 100; scale *= 10) {
+				for (int scale = 1; scale <= 10; scale *= 10) {
 					double eps = scale * 0.001;
 					MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data,
 							samples);
@@ -193,6 +196,9 @@ public class Main {
 						}
 					}
 					resetTime();
+					
+					inst = null;
+					System.gc();
 				}
 			}
 
@@ -222,9 +228,11 @@ public class Main {
 						}
 					}
 					resetTime();
-					
 					if (eps <= 0.001 + 1e-6 && inst.result().size() <= r - 10)
 						flag = true;
+					
+					inst = null;
+					System.gc();
 				}
 			}
 
@@ -255,6 +263,9 @@ public class Main {
 				
 				if (inst.result().size() <= r - 10)
 					flag = true;
+				
+				inst = null;
+				System.gc();
 			}
 		}
 		wr_result.close();

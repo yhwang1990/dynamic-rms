@@ -7,7 +7,7 @@ public class MaxInst {
 
     private final double TAU = 0.1;
 
-    private int r, mr, max_mr;
+    public int r, mr, max_mr;
     private Map<Integer, HashSet<Integer>> mapping;
 
     private MinErrorRMS mrInst;
@@ -485,7 +485,8 @@ public class MaxInst {
             u_level[u_idx] = -1;
 
             for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                mapping.get(idx).remove(u_idx);
+            	if (mapping.containsKey(idx))
+            		mapping.get(idx).remove(u_idx);
                 levels[lv].density.replace(idx, levels[lv].density.get(idx) - 1);
             }
             sol.get(t_idx).cov.remove(u_idx);
