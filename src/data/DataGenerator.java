@@ -10,19 +10,13 @@ import java.text.DecimalFormat;
 public class DataGenerator {
 
     public static void main(String[] args) {
-        /*
-        double[][] data = generateIndep10D(1_000_000);
-        for (int dim = 2; dim <= 10; dim++) {
-            writeToFile("Indep_" + dim + "d.txt", data, dim);
+        for (int dim = 3; dim <= 10; dim++) {
+            double[][] data = generateCorr(1_000_000, dim);
+            writeToFile("./dataset/Corr_" + dim + "d.txt", data, dim);
         }
-        for (int dim = 2; dim <= 10; dim++) {
-            double[][] data = generateAnti(1_000_000, dim);
-            writeToFile("AntiCorr_" + dim + "d.txt", data, dim);
-        }
-        */
     }
 
-    private static void writeToFile(String filename, double[][] data, int dim) {
+    public static void writeToFile(String filename, double[][] data, int dim) {
         DecimalFormat df = new DecimalFormat("0.000000");
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(filename));
@@ -42,7 +36,7 @@ public class DataGenerator {
         }
     }
 
-    private static double[][] generateIndep10D(int size) {
+    public static double[][] generateIndep10D(int size) {
         double[][] data = new double[size][10];
         for (int i = 0; i < size; i++) {
             TupleGenerator.generateIndep(10, data[i]);
@@ -50,15 +44,15 @@ public class DataGenerator {
         return data;
     }
 
-    private static double[][] generateCorr10D(int size) {
-        double[][] data = new double[size][10];
+    public static double[][] generateCorr(int size, int dim) {
+        double[][] data = new double[size][dim];
         for (int i = 0; i < size; i++) {
-            TupleGenerator.generateCorr(10, data[i]);
+            TupleGenerator.generateCorr(dim, data[i]);
         }
         return data;
     }
 
-    private static double[][] generateAnti(int size, int dim) {
+    public static double[][] generateAnti(int size, int dim) {
         double[][] data = new double[size][dim];
         for (int i = 0; i < size; i++) {
             TupleGenerator.generateAnti(dim, data[i]);

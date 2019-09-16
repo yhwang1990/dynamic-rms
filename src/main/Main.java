@@ -56,8 +56,8 @@ public class Main {
 			System.exit(0);
 		}
 
-		int sample_size = decideSampleSize(dim);
-		double[][] samples = readUtilFile(dim, sample_size);
+		int max_sample_size = decideSampleSize(dim);
+		double[][] samples = readUtilFile(dim, max_sample_size);
 
 		if (samples == null) {
 			System.err.println("error in reading samples");
@@ -73,6 +73,7 @@ public class Main {
 		for (int k = 1; k <= 1; k++) {
 			for (int scale = 1; scale <= 10; scale++) {
 				double eps = scale * 0.001;
+				int sample_size = (int) (max_sample_size * 0.001 / eps);
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
 				writeHeader(wr_result, filePath, k, eps);
 				writeHeader(wr_time, filePath, k, eps);
@@ -84,7 +85,7 @@ public class Main {
 				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
 					inst.update(workLoad.get(opr_id));
 					if (opr_id % interval == interval - 1) {
-						writeTime(wr_time, output_id);
+						writeTime(wr_time, output_id, inst.result().size());
 						writeResult(wr_result, output_id, inst, data);
 						output_id += 1;
 
@@ -93,39 +94,38 @@ public class Main {
 					}
 				}
 				resetTime();
-				
+
 				inst = null;
 				System.gc();
 			}
 
-//			for (int scale = 2; scale <= 10; scale++) {
-//				double eps = scale * 0.01;
-//				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-//				writeHeader(wr_result, filePath, k, eps);
-//				writeHeader(wr_time, filePath, k, eps);
-//
-//				try {
-//					wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
-//							+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-//				} catch (IOException e) {
-//					e.printStackTrace();
-//				}
-//
-//				int interval = workLoad.size() / 10;
-//				int output_id = 0;
-//				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-//					inst.update(workLoad.get(opr_id));
-//					if (opr_id % interval == interval - 1) {
-//						writeTime(wr_time, output_id);
-//						writeResult(wr_result, output_id, inst, data);
-//						output_id += 1;
-//
-//						wr_result.flush();
-//						wr_time.flush();
-//					}
-//				}
-//				resetTime();
-//			}
+			for (int scale = 2; scale <= 10; scale++) {
+				double eps = scale * 0.01;
+				int sample_size = (int) (max_sample_size * 0.001 / eps);
+				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
+				writeHeader(wr_result, filePath, k, eps);
+				writeHeader(wr_time, filePath, k, eps);
+				wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
+						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+
+				int interval = workLoad.size() / 10;
+				int output_id = 0;
+				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+					inst.update(workLoad.get(opr_id));
+					if (opr_id % interval == interval - 1) {
+						writeTime(wr_time, output_id, inst.result().size());
+						writeResult(wr_result, output_id, inst, data);
+						output_id += 1;
+
+						wr_result.flush();
+						wr_time.flush();
+					}
+				}
+				resetTime();
+
+				inst = null;
+				System.gc();
+			}
 		}
 		wr_result.close();
 		wr_time.close();
@@ -156,8 +156,8 @@ public class Main {
 			System.exit(0);
 		}
 
-		int sample_size = decideSampleSize(dim);
-		double[][] samples = readUtilFile(dim, sample_size);
+		int max_sample_size = decideSampleSize(dim);
+		double[][] samples = readUtilFile(dim, max_sample_size);
 
 		if (samples == null) {
 			System.err.println("error in reading sample file");
@@ -170,76 +170,24 @@ public class Main {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
+		
 		for (int k = 1; k <= 1; k++) {
 			boolean flag = false;
-			for (int r = 5; r <= 10; r += 5) {
-				for (int scale = 1; scale <= 10; scale *= 10) {
-					double eps = scale * 0.001;
-					MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data,
-							samples);
-
-					writeHeader(wr_result, filePath, k, r, eps);
-					writeHeader(wr_time, filePath, k, r, eps);
-					wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
-							+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-					int interval = workLoad.size() / 10;
-					int output_id = 0;
-					for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-						inst.update(workLoad.get(opr_id));
-						if (opr_id % interval == interval - 1) {
-							writeTime(wr_time, output_id);
-							writeResult(wr_result, output_id, inst, data);
-							output_id += 1;
-							wr_result.flush();
-							wr_time.flush();
-						}
-					}
-					resetTime();
-					
-					inst = null;
-					System.gc();
-				}
-			}
-
-			for (int r = 15; r <= 50; r += 5) {
+			int last_sample_size = 1000;
+			for (int r = 5; r <= 100; r += 5) {
 				if (flag)
 					break;
-				for (int scale = 1; scale <= 10; scale *= 10) {
-					double eps = scale * 0.001;
-					MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data,
-							samples);
+				if (r < dim)
+					continue;
 
-					writeHeader(wr_result, filePath, k, r, eps);
-					writeHeader(wr_time, filePath, k, r, eps);
-					wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
-							+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+				int sample_size = calculateSampleSize(dim, k, r, data_size, init_size, last_sample_size,
+						max_sample_size, data, samples);
+				last_sample_size = sample_size;
+				double eps = 0.0001;
+				if (sample_size == 1000)
+					eps = calculateEpsValue(dim, k, r, data_size, init_size, sample_size, data, samples);
+				System.out.println(r + " " + sample_size + " " + eps);
 
-					int interval = workLoad.size() / 10;
-					int output_id = 0;
-					for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-						inst.update(workLoad.get(opr_id));
-						if (opr_id % interval == interval - 1) {
-							writeTime(wr_time, output_id);
-							writeResult(wr_result, output_id, inst, data);
-							output_id += 1;
-							wr_result.flush();
-							wr_time.flush();
-						}
-					}
-					resetTime();
-					if (eps <= 0.001 + 1e-6 && inst.result().size() <= r - 10)
-						flag = true;
-					
-					inst = null;
-					System.gc();
-				}
-			}
-
-			for (int r = 55; r <= 100; r += 5) {
-				if (flag)
-					break;
-				double eps = 0.001;
 				MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
 
 				writeHeader(wr_result, filePath, k, r, eps);
@@ -260,10 +208,10 @@ public class Main {
 					}
 				}
 				resetTime();
-				
+
 				if (inst.result().size() <= r - 10)
 					flag = true;
-				
+
 				inst = null;
 				System.gc();
 			}
@@ -315,6 +263,37 @@ public class Main {
 	 * df.format(acc10) + "\n"); } } bw.flush(); } br.close(); bw.close(); } catch
 	 * (IOException e) { e.printStackTrace(); } }
 	 */
+
+	private static double calculateEpsValue(int dim, int k, int r, int data_size, int init_size, int sample_size,
+			double[][] data, double[][] samples) {
+		double eps = 0.0001, max_eps = 0.11;
+		while (eps < max_eps) {
+			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
+			int mr = test_inst.maxInst.mr;
+			test_inst = null;
+
+			if (mr <= sample_size / 10) {
+				eps *= 2;
+			} else
+				return eps;
+		}
+		return 0.1;
+	}
+
+	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int sample_size,
+			int max_sample_size, double[][] data, double[][] samples) {
+		while (sample_size < max_sample_size) {
+			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.0001, data_size, init_size, sample_size, data, samples);
+			int test_size = test_inst.result().size();
+			test_inst = null;
+
+			if (test_size >= r + 4)
+				return sample_size;
+			else
+				sample_size *= 2;
+		}
+		return max_sample_size;
+	}
 
 	private static double[][] readDataFile(String filePath) {
 		try {
@@ -467,8 +446,8 @@ public class Main {
 		try {
 			wr.write("idx=" + idx + "\n");
 			for (int t_idx : inst.result()) {
-				for (double val : data[t_idx]) {
-					wr.write(df.format(val) + " ");
+				for (int d = 0; d < data[t_idx].length - 1; d++) {
+					wr.write(df.format(data[t_idx][d]) + " ");
 				}
 				wr.write("\n");
 			}
@@ -482,11 +461,23 @@ public class Main {
 		try {
 			wr.write("idx=" + idx + "\n");
 			for (int t_idx : inst.result()) {
-				for (double val : data[t_idx]) {
-					wr.write(df.format(val) + " ");
+				for (int d = 0; d < data[t_idx].length - 1; d++) {
+					wr.write(df.format(data[t_idx][d]) + " ");
 				}
 				wr.write("\n");
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void writeTime(BufferedWriter wr, int idx, int size) {
+		try {
+			wr.write("idx=" + idx + " size=" + size + " ");
+			wr.write(Math.round(AddTreeTime) + " ");
+			wr.write(Math.round(AddSetTime) + " ");
+			wr.write(Math.round(DelTreeTime) + " ");
+			wr.write(Math.round(DelSetTime) + "\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -524,7 +515,7 @@ public class Main {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static void resetTime() {
 		InitTime = 0.0;
 		AddTreeTime = 0.0;

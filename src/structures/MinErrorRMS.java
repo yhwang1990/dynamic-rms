@@ -8,7 +8,7 @@ import java.util.Set;
 public class MinErrorRMS {
 
     DualTree dualTree;
-    private MaxInst maxInst;
+    public MaxInst maxInst;
 
     public MinErrorRMS(int dim, int k, int r, double eps, int data_size, int init_size, int sample_size, double[][] data, double[][] samples) {
         long t0 = System.nanoTime();
