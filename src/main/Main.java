@@ -71,9 +71,10 @@ public class Main {
 			workLoad.add(new TupleOpr(idx, -1));
 
 		for (int k = 1; k <= 1; k++) {
+			int dec_size = max_sample_size / 10;
 			for (int scale = 1; scale <= 10; scale++) {
 				double eps = scale * 0.001;
-				int sample_size = (int) (max_sample_size * 0.001 / eps);
+				int sample_size = max_sample_size - (scale - 1) * dec_size;
 				System.out.println(eps + " " + sample_size);
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
 				writeHeader(wr_result, filePath, k, eps);
@@ -99,10 +100,12 @@ public class Main {
 				inst = null;
 				System.gc();
 			}
-
+			
+			max_sample_size = max_sample_size / 10;
+			dec_size = max_sample_size / 10;
 			for (int scale = 2; scale <= 10; scale++) {
 				double eps = scale * 0.01;
-				int sample_size = (int) (max_sample_size * 0.001 / eps);
+				int sample_size = max_sample_size - (scale - 1) * dec_size;
 				System.out.println(eps + " " + sample_size);
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
 				writeHeader(wr_result, filePath, k, eps);

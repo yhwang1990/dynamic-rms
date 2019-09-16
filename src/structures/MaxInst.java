@@ -4,9 +4,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MaxInst {
-
-    private final double TAU = 0.1;
-
     public int r, mr, max_mr;
     private Map<Integer, HashSet<Integer>> mapping;
 
@@ -28,7 +25,7 @@ public class MaxInst {
             return;
         updateMapping(filterOpr);
 
-        if (filterOpr.utilities.size() > TAU * mr) {
+        if (filterOpr.utilities.size() > mr / 10.0) {
             scr = new SetCoverR(mr);
         } else {
             scr.update(filterOpr);
