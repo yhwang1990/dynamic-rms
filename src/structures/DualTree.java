@@ -1,15 +1,15 @@
 package structures;
 
-class DualTree {
+public class DualTree {
 
-    KdTree tIdx;
-    ConeTree uIdx;
+	public KdTree tIdx;
+	public ConeTree uIdx;
 
     int data_size, init_size, sample_size;
 
     double[][] data, samples;
 
-    DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size, double[][] data, double[][] samples) {
+    public DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size, double[][] data, double[][] samples) {
         double tau = 0.99;
         int leaf_size = Math.max(5, 2 * k);
 
@@ -25,7 +25,7 @@ class DualTree {
         this.uIdx = new ConeTree(dim + 1, k, eps, tau, this);
     }
 
-    Operations insert(int t_idx) {
+    public Operations insert(int t_idx) {
         Operations opr = new Operations(t_idx, 1);
         boolean is_inserted = tIdx.insert(t_idx);
         if (!is_inserted) {
@@ -36,7 +36,7 @@ class DualTree {
         return opr;
     }
 
-    Operations delete(int t_idx) {
+    public Operations delete(int t_idx) {
         Operations opr = new Operations(t_idx, -1);
         boolean is_deleted = tIdx.delete(t_idx);
         if (!is_deleted) {

@@ -2,14 +2,14 @@ package structures;
 
 import java.util.*;
 
-class Operations {
+public class Operations {
     final int t_idx;
     final int oprType;
 
     List<Integer> utilities;
     List<SetOpr> oprs;
 
-    Operations(final int t_idx, final int oprType) {
+    public Operations(final int t_idx, final int oprType) {
         this.t_idx = t_idx;
         this.oprType = oprType;
 
@@ -17,7 +17,7 @@ class Operations {
         this.oprs = new ArrayList<>();
     }
 
-    void print() {
+    public void print() {
         if (oprType > 0)
             System.out.print("ADD ");
         else

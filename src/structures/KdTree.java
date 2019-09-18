@@ -9,10 +9,10 @@ public class KdTree {
     private int dim;
     private int capacity;
 
-    private boolean[] isDeleted;
+    boolean[] isDeleted;
     double[][] data;
 
-    KdTree(int dim, int capacity, DualTree dualTree) {
+    public KdTree(int dim, int capacity, DualTree dualTree) {
         this.dim = dim;
         this.capacity = capacity;
 

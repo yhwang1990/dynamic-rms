@@ -15,9 +15,9 @@ public class ConeTree {
     private double tau;
 
     private double[][] samples;
-    TopKResult[] topKResults;
+    public TopKResult[] topKResults;
 
-    ConeTree(int dim, int k, double eps, double tau, DualTree dualTree) {
+    public ConeTree(int dim, int k, double eps, double tau, DualTree dualTree) {
         this.dim = dim;
         this.k = k;
         this.eps = eps;
@@ -108,7 +108,7 @@ public class ConeTree {
                             }
                         }
                         topKResults[u_idx] = newResult;
-                    } else if (score >= (1.0 - eps) * topKResults[u_idx].k_score) {
+                    } else if (score >= (1.0 - eps) * topKResults[u_idx].k_score - 1e-6) {
                         topKResults[u_idx].delete(u_idx, t_idx, score, opr);
                     }
 
