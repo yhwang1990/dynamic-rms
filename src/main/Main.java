@@ -41,24 +41,22 @@ public class Main {
 		wr_time = new BufferedWriter(new FileWriter(timeFile, true));
 
 		double[][] data = readDataFile(filePath);
-
 		if (data == null) {
 			System.err.println("error in reading dataset");
 			System.exit(0);
 		}
-
-		int data_size = data.length, dim = data[0].length - 1;
-		int init_size = data_size / 2;
-
+		
 		int[] toBeDeleted = readWorkload(filePath);
 		if (toBeDeleted == null) {
 			System.err.println("error in reading workload");
 			System.exit(0);
 		}
-
+		
+		int data_size = data.length, dim = data[0].length - 1;
+		int init_size = data_size - toBeDeleted.length;
+		
 		int max_sample_size = decideSampleSize(dim);
 		double[][] samples = readUtilFile(dim, max_sample_size);
-
 		if (samples == null) {
 			System.err.println("error in reading samples");
 			System.exit(0);
@@ -96,38 +94,13 @@ public class Main {
 					}
 				}
 				resetTime();
-
-				inst = null;
-				System.gc();
-			}
-			
-			max_sample_size = max_sample_size / 10;
-			dec_size = max_sample_size / 10;
-			for (int scale = 2; scale <= 10; scale++) {
-				double eps = scale * 0.01;
-				int sample_size = max_sample_size - (scale - 1) * dec_size;
-				System.out.println(eps + " " + sample_size);
-				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-				writeHeader(wr_result, filePath, k, eps);
-				writeHeader(wr_time, filePath, k, eps);
-				wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
-						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-				int interval = workLoad.size() / 10;
-				int output_id = 0;
-				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-					inst.update(workLoad.get(opr_id));
-					if (opr_id % interval == interval - 1) {
-						writeTime(wr_time, output_id, inst.result().size());
-						writeResult(wr_result, output_id, inst, data);
-						output_id += 1;
-
-						wr_result.flush();
-						wr_time.flush();
-					}
+				
+				if (inst.result().size() <= 10) {
+					inst = null;
+					System.gc();
+					break;
 				}
-				resetTime();
-
+				
 				inst = null;
 				System.gc();
 			}
@@ -145,25 +118,22 @@ public class Main {
 		wr_time = new BufferedWriter(new FileWriter(timeFile, true));
 
 		double[][] data = readDataFile(filePath);
-
 		if (data == null) {
 			System.err.println("error in reading data file");
 			System.exit(0);
 		}
-
-		int data_size = data.length, dim = data[0].length - 1;
-		int init_size = data_size / 2;
-
+		
 		int[] toBeDeleted = readWorkload(filePath);
-
 		if (toBeDeleted == null) {
 			System.err.println("error in reading workload file");
 			System.exit(0);
 		}
 
+		int data_size = data.length, dim = data[0].length - 1;
+		int init_size = data_size - toBeDeleted.length;
+
 		int max_sample_size = decideSampleSize(dim);
 		double[][] samples = readUtilFile(dim, max_sample_size);
-
 		if (samples == null) {
 			System.err.println("error in reading sample file");
 			System.exit(0);

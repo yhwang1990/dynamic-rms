@@ -15,12 +15,12 @@ public class WorkloadGenerator {
 
     private static void generateWorkload() {
         Random rand = new Random(0);
-        int size = 21_961;
+        int size = 100000;
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter("NBA_wl.txt"));
+            BufferedWriter bw = new BufferedWriter(new FileWriter("./dataset/Corr_wl.txt"));
             ArrayList<Integer> toBeDeleted = new ArrayList<>();
             int[] bitmap = new int[size];
-            while (toBeDeleted.size() < size / 2) {
+            while (toBeDeleted.size() < Math.min(size / 2, 50000)) {
                 int nxt = rand.nextInt(size);
                 if (bitmap[nxt] == 0) {
                     toBeDeleted.add(nxt);

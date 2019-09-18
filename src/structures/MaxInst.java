@@ -482,8 +482,7 @@ public class MaxInst {
             u_level[u_idx] = -1;
 
             for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-            	if (mapping.containsKey(idx))
-            		mapping.get(idx).remove(u_idx);
+            	mapping.get(idx).remove(u_idx);
                 levels[lv].density.replace(idx, levels[lv].density.get(idx) - 1);
             }
             sol.get(t_idx).cov.remove(u_idx);

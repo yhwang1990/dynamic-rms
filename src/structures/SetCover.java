@@ -93,7 +93,7 @@ public class SetCover {
 
         updateMapping(opr);
 
-        if (opr.utilities.size() > Math.min(5000, sample_size / 40)) {
+        if (opr.utilities.size() > Math.max(5000, sample_size / 50)) {
             reconstruct();
             return;
         }

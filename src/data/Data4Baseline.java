@@ -12,7 +12,9 @@ import java.util.List;
 
 public class Data4Baseline {
     public static void main(String[] args) {
-        generateData4Baseline(args[0]);
+    	for (int d = 3; d <= 10; d++) {
+    		generateData4Baseline("./dataset/Indep_" + d + "d.txt");
+        }
     }
 
     private static void generateData4Baseline(String dataPath) {
@@ -50,7 +52,7 @@ public class Data4Baseline {
                 wl[idx++] = Integer.parseInt(line.trim());
             br.close();
 
-            int init_size = data.length / 2;
+            int init_size = data.length - wl.length;
             List<TupleOpr> workLoad = new ArrayList<>();
             for (int i = init_size; i < data.length; i++)
                 workLoad.add(new TupleOpr(i, 1));
@@ -65,7 +67,6 @@ public class Data4Baseline {
             for (int i = init_size; i < data.length; i++) {
                 isDeleted[i] = true;
             }
-
 
             int interval = workLoad.size() / 10;
             int data_idx = 0;

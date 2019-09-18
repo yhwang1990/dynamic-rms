@@ -11,8 +11,8 @@ public class DataGenerator {
 
     public static void main(String[] args) {
         for (int dim = 3; dim <= 10; dim++) {
-            double[][] data = generateCorr(1_000_000, dim);
-            writeToFile("./dataset/Corr_" + dim + "d.txt", data, dim);
+            double[][] data = generateAntiCorr(100_000, dim);
+            writeToFile("./dataset/AntiCorr_" + dim + "d.txt", data, dim);
         }
     }
 
@@ -36,10 +36,10 @@ public class DataGenerator {
         }
     }
 
-    public static double[][] generateIndep10D(int size) {
-        double[][] data = new double[size][10];
+    public static double[][] generateIndep(int size, int dim) {
+        double[][] data = new double[size][dim];
         for (int i = 0; i < size; i++) {
-            TupleGenerator.generateIndep(10, data[i]);
+            TupleGenerator.generateIndep(dim, data[i]);
         }
         return data;
     }
@@ -52,7 +52,7 @@ public class DataGenerator {
         return data;
     }
 
-    public static double[][] generateAnti(int size, int dim) {
+    public static double[][] generateAntiCorr(int size, int dim) {
         double[][] data = new double[size][dim];
         for (int i = 0; i < size; i++) {
             TupleGenerator.generateAnti(dim, data[i]);
