@@ -33,8 +33,8 @@ public class Main {
 	}
 
 	private static void runMinSizeRMS(String filePath) throws IOException {
-		String resultFile = "result/tuples_contRMS_ms.txt";
-		String timeFile = "result/time_contRMS_ms.txt";
+		String resultFile = "result/tuples_contRMS_ms_2.txt";
+		String timeFile = "result/time_contRMS_ms_2.txt";
 
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(resultFile, true));
@@ -110,8 +110,8 @@ public class Main {
 	}
 
 	private static void runMinErrorRMS(String filePath) throws IOException {
-		String resultFile = "result/tuples_contRMS_me.txt";
-		String timeFile = "result/time_contRMS_me.txt";
+		String resultFile = "result/tuples_contRMS_me_2.txt";
+		String timeFile = "result/time_contRMS_me_2.txt";
 
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(resultFile, true));
