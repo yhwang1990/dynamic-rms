@@ -108,8 +108,10 @@ public class ConeTree {
                             }
                         }
                         topKResults[u_idx] = newResult;
-                    } else if (score >= (1.0 - eps) * topKResults[u_idx].k_score - 1e-6) {
-                        topKResults[u_idx].delete(u_idx, t_idx, score, opr);
+                    } else if (topKResults[u_idx].results.contains(t_idx)) {
+                    	topKResults[u_idx].approximate_result.remove(new RankItem(t_idx, score));
+                    	if (topKResults[u_idx].results.remove(t_idx))
+                    		opr.utilities.add(u_idx);
                     }
 
                     if (k_updated && cur_node.min_k_score == old_k_score)
@@ -122,9 +124,9 @@ public class ConeTree {
                     update_min_k_score(cur_node);
                 }
             } else {
-                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) >= (1 - eps) * cur_node.lc.min_k_score)
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) >= (1.0 - eps) * cur_node.lc.min_k_score - 1.0E-6)
                     queue.addLast(cur_node.lc);
-                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) >= (1 - eps) * cur_node.rc.min_k_score)
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) >= (1.0 - eps) * cur_node.rc.min_k_score - 1.0E-6)
                     queue.addLast(cur_node.rc);
             }
         }

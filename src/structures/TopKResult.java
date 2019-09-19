@@ -4,9 +4,9 @@ import java.util.*;
 
 public class TopKResult {
 
-    private int k;
-    private double eps;
-    private PriorityQueue<RankItem> exact_result, approximate_result;
+    int k;
+    double eps;
+    PriorityQueue<RankItem> exact_result, approximate_result;
 
     double k_score;
     HashSet<Integer> results;
@@ -83,12 +83,6 @@ public class TopKResult {
         }
 
         return k_updated;
-    }
-
-    void delete(int u_idx, int t_idx, double score, Operations opr) {
-        approximate_result.remove(new RankItem(t_idx, score));
-        results.remove(t_idx);
-        opr.utilities.add(u_idx);
     }
 
     void initResults() {
