@@ -1,8 +1,8 @@
 package generators;
 
-import utils.VectorUtil;
-
 import java.util.Random;
+
+import utils.VectorUtil;
 
 public class UtilityGenerator {
     private static Random RAND = new Random(97);
