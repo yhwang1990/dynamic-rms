@@ -437,6 +437,9 @@ public class MaxInst {
                         }
 
                         for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
+                        	if(mrInst.dualTree.tIdx.isDeleted[idx])
+                        		continue;
+                        	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                             if (!levels[new_level].density.containsKey(idx))
@@ -461,6 +464,9 @@ public class MaxInst {
 
                     if (new_level != old_level) {
                         for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
+                        	if(mrInst.dualTree.tIdx.isDeleted[idx])
+                        		continue;
+                        	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                             if (!levels[new_level].density.containsKey(idx)) {
@@ -521,6 +527,8 @@ public class MaxInst {
 
             if (new_level >= 0) {
                 for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
+                	if(mrInst.dualTree.tIdx.isDeleted[idx])
+                		continue;
                     if (!levels[new_level].density.containsKey(idx)) {
                         levels[new_level].density.put(idx, 1);
                     } else {
@@ -562,6 +570,9 @@ public class MaxInst {
                 u_level[u_idx] = new_level;
 
                 for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
+                	if(mrInst.dualTree.tIdx.isDeleted[idx])
+                		continue;
+                	
                     if (!levels[new_level].density.containsKey(idx)) {
                         levels[new_level].density.put(idx, 1);
                     } else {
@@ -597,6 +608,9 @@ public class MaxInst {
                 u_level[u_idx] = new_level;
 
                 for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
+                	if(mrInst.dualTree.tIdx.isDeleted[idx])
+                		continue;
+                	
                     levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                     if (!levels[new_level].density.containsKey(idx)) {
@@ -670,6 +684,9 @@ public class MaxInst {
                             }
 
                             for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
+                            	if(mrInst.dualTree.tIdx.isDeleted[idx])
+                            		continue;
+                            	
                                 levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                                 if (!levels[new_level].density.containsKey(idx)) {
@@ -702,6 +719,9 @@ public class MaxInst {
                                 continue;
 
                             for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
+                            	if(mrInst.dualTree.tIdx.isDeleted[idx])
+                            		continue;
+                            	
                                 levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                                 if (!levels[new_level].density.containsKey(idx)) {

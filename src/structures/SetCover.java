@@ -256,6 +256,9 @@ public class SetCover {
         for (int u_idx : solInfo.cov) {
             int new_level = -1, new_idx = -1, cand_size = 0;
             for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
+            	if(msInst.dualTree.tIdx.isDeleted[idx])
+            		continue;
+            	
                 if (sol.containsKey(idx) && sol.get(idx).level_idx > new_level) {
                     new_level = sol.get(idx).level_idx;
                     new_idx = idx;
@@ -287,6 +290,9 @@ public class SetCover {
                     }
 
                     for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
+                    	if(msInst.dualTree.tIdx.isDeleted[idx])
+                    		continue;
+                    	
                         levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                         if (!levels[new_level].density.containsKey(idx))
@@ -311,6 +317,9 @@ public class SetCover {
 
                 if (new_level != old_level) {
                     for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
+                    	if(msInst.dualTree.tIdx.isDeleted[idx])
+                    		continue;
+                    	
                         levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                         if (!levels[new_level].density.containsKey(idx)) {
@@ -350,6 +359,9 @@ public class SetCover {
             u_level[u_idx] = new_level;
 
             for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
+            	if(msInst.dualTree.tIdx.isDeleted[idx])
+            		continue;
+            	
                 levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                 if (!levels[new_level].density.containsKey(idx)) {
@@ -423,6 +435,9 @@ public class SetCover {
                         }
 
                         for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
+                        	if(msInst.dualTree.tIdx.isDeleted[idx])
+                        		continue;
+                        	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                             if (!levels[new_level].density.containsKey(idx)) {
@@ -455,6 +470,9 @@ public class SetCover {
                             continue;
 
                         for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
+                        	if(msInst.dualTree.tIdx.isDeleted[idx])
+                        		continue;
+                        	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
                             if (!levels[new_level].density.containsKey(idx)) {
