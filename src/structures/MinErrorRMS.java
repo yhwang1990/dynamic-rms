@@ -1,14 +1,14 @@
 package structures;
 
-import main.Main;
 import utils.TupleOpr;
-
 import java.util.Set;
 
 public class MinErrorRMS {
 
     DualTree dualTree;
     public MaxInst maxInst;
+    
+    public double initTime = 0.0, addTreeTime = 0.0, addCovTime = 0.0, delTreeTime = 0.0, delCovTime = 0.0;
 
     public MinErrorRMS(int dim, int k, int r, double eps, int data_size, int init_size, int sample_size, double[][] data, double[][] samples) {
         long t0 = System.nanoTime();
@@ -17,7 +17,7 @@ public class MinErrorRMS {
         this.maxInst = new MaxInst(r, sample_size, this);
 
         long t1 = System.nanoTime();
-        Main.InitTime += (t1 - t0) / 1e6;
+        this.initTime += (t1 - t0) / 1e6;
     }
 
     public void update(TupleOpr opr) {
@@ -36,11 +36,11 @@ public class MinErrorRMS {
         long t2 = System.nanoTime();
 
         if (opr.oprType > 0) {
-            Main.AddTreeTime += (t1 - t0) / 1e6;
-            Main.AddSetTime += (t2 - t1) / 1e6;
+            addTreeTime += (t1 - t0) / 1e6;
+            addCovTime += (t2 - t1) / 1e6;
         } else {
-            Main.DelTreeTime += (t1 - t0) / 1e6;
-            Main.DelSetTime += (t2 - t1) / 1e6;
+            delTreeTime += (t1 - t0) / 1e6;
+            delCovTime += (t2 - t1) / 1e6;
         }
     }
 

@@ -15,9 +15,9 @@ public class WorkloadGenerator {
 
     private static void generateWorkload() {
         Random rand = new Random(0);
-        int size = 100000;
+        int size = 1000000;
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter("./dataset/Corr_wl.txt"));
+            BufferedWriter bw = new BufferedWriter(new FileWriter("./dataset/Indep1M_1000000_wl.txt"));
             ArrayList<Integer> toBeDeleted = new ArrayList<>();
             int[] bitmap = new int[size];
             while (toBeDeleted.size() < Math.min(size / 2, 50000)) {

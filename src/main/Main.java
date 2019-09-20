@@ -12,8 +12,6 @@ import java.util.*;
 
 public class Main {
 
-	public static double InitTime = 0.0, AddTreeTime = 0.0, AddSetTime = 0.0, DelTreeTime = 0.0, DelSetTime = 0.0;
-
 	public static void main(String[] args) {
 		if (args.length < 2)
 			System.err.println("error in args");
@@ -77,7 +75,7 @@ public class Main {
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
 				writeHeader(wr_result, filePath, k, eps);
 				writeHeader(wr_time, filePath, k, eps);
-				wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
+				wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
 						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
 				int interval = workLoad.size() / 10;
@@ -85,7 +83,12 @@ public class Main {
 				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
 					inst.update(workLoad.get(opr_id));
 					if (opr_id % interval == interval - 1) {
-						writeTime(wr_time, output_id, inst.result().size());
+						wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
+						wr_time.write(Math.round(inst.addTreeTime) + " ");
+						wr_time.write(Math.round(inst.addCovTime) + " ");
+						wr_time.write(Math.round(inst.delTreeTime) + " ");
+						wr_time.write(Math.round(inst.delCovTime) + "\n");
+						
 						writeResult(wr_result, output_id, inst, data);
 						output_id += 1;
 
@@ -93,7 +96,6 @@ public class Main {
 						wr_time.flush();
 					}
 				}
-				resetTime();
 				
 				if (inst.result().size() <= 10) {
 					inst = null;
@@ -167,7 +169,7 @@ public class Main {
 
 				writeHeader(wr_result, filePath, k, r, eps);
 				writeHeader(wr_time, filePath, k, r, eps);
-				wr_time.write("init_time=" + Math.round(InitTime) + " wl_size=" + workLoad.size() + " inserts="
+				wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
 						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
 				int interval = workLoad.size() / 10;
@@ -175,14 +177,18 @@ public class Main {
 				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
 					inst.update(workLoad.get(opr_id));
 					if (opr_id % interval == interval - 1) {
-						writeTime(wr_time, output_id);
+						wr_time.write("idx=" + output_id + " ");
+						wr_time.write(Math.round(inst.addTreeTime) + " ");
+						wr_time.write(Math.round(inst.addCovTime) + " ");
+						wr_time.write(Math.round(inst.delTreeTime) + " ");
+						wr_time.write(Math.round(inst.delCovTime) + "\n");
+						
 						writeResult(wr_result, output_id, inst, data);
 						output_id += 1;
 						wr_result.flush();
 						wr_time.flush();
 					}
 				}
-				resetTime();
 
 				if (inst.result().size() <= r - 10)
 					flag = true;
@@ -241,7 +247,7 @@ public class Main {
 
 	private static double calculateEpsValue(int dim, int k, int r, int data_size, int init_size, int sample_size,
 			double[][] data, double[][] samples) {
-		double eps = 0.0001, max_eps = 0.11;
+		double eps = 0.0001, max_eps = 0.5;
 		while (eps < max_eps) {
 			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
 			int mr = test_inst.maxInst.mr;
@@ -446,30 +452,6 @@ public class Main {
 		}
 	}
 
-	private static void writeTime(BufferedWriter wr, int idx, int size) {
-		try {
-			wr.write("idx=" + idx + " size=" + size + " ");
-			wr.write(Math.round(AddTreeTime) + " ");
-			wr.write(Math.round(AddSetTime) + " ");
-			wr.write(Math.round(DelTreeTime) + " ");
-			wr.write(Math.round(DelSetTime) + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private static void writeTime(BufferedWriter wr, int idx) {
-		try {
-			wr.write("idx=" + idx + " ");
-			wr.write(Math.round(AddTreeTime) + " ");
-			wr.write(Math.round(AddSetTime) + " ");
-			wr.write(Math.round(DelTreeTime) + " ");
-			wr.write(Math.round(DelSetTime) + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps) {
 		try {
 			wr.write("dataset=" + filePath + " ");
@@ -489,13 +471,5 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private static void resetTime() {
-		InitTime = 0.0;
-		AddTreeTime = 0.0;
-		AddSetTime = 0.0;
-		DelTreeTime = 0.0;
-		DelSetTime = 0.0;
 	}
 }
