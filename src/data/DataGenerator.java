@@ -10,8 +10,8 @@ import java.text.DecimalFormat;
 public class DataGenerator {
 
     public static void main(String[] args) {
-    	double[][] data = generateIndep(1_000_000, 6);
-    	writeToFile("./dataset/Indep1M_" + 6 + "d.txt", data, 6);
+    	double[][] data = generateAntiCorr(1_000_000, 6);
+    	writeToFile("./dataset/AntiCorr1M_" + 6 + "d.txt", data, 6);
     }
 
     public static void writeToFile(String filename, double[][] data, int dim) {
