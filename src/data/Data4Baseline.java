@@ -12,9 +12,10 @@ import java.util.List;
 
 public class Data4Baseline {
     public static void main(String[] args) {
-    	for (int d = 3; d <= 10; d++) {
-    		generateData4Baseline("./dataset/Indep_" + d + "d.txt");
-        }
+//    	for (int d = 3; d <= 10; d++) {
+//   		generateData4Baseline("./dataset/Indep_" + d + "d.txt");
+//		}
+    	generateData4Baseline("./dataset/Airline.txt");
     }
 
     private static void generateData4Baseline(String dataPath) {
