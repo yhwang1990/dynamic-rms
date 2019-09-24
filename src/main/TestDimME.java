@@ -1,6 +1,8 @@
 package main;
 
+import structures.MinErrorRMS;
 import structures.MinSizeRMS;
+
 import utils.TupleOpr;
 import utils.VectorUtil;
 
@@ -9,41 +11,41 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class MSkRMSMain {
+public class TestDimME {
 
 	public static void main(String[] args) {
 		try {
-			runMinSizeRMS(args[0], args[1], args[2]);
+			runMinErrorRMS(args[0], args[1], args[2]);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void runMinSizeRMS(String dataPath, String tuplePath, String timePath) throws IOException {
-
+	private static void runMinErrorRMS(String dataPath, String tuplePath, String timePath) throws IOException {
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
+		int k = 1, r = 50;
 		double[][] data = readDataFile(dataPath);
 		if (data == null) {
-			System.err.println("error in reading dataset");
+			System.err.println("error in reading data file");
 			System.exit(0);
 		}
 
 		int[] toBeDeleted = readWorkload(dataPath);
 		if (toBeDeleted == null) {
-			System.err.println("error in reading workload");
+			System.err.println("error in reading workload file");
 			System.exit(0);
 		}
 
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_sample_size = 500000;
+		int max_sample_size = decideSampleSize(dim);
 		double[][] samples = readUtilFile(dim, max_sample_size);
 		if (samples == null) {
-			System.err.println("error in reading samples");
+			System.err.println("error in reading sample file");
 			System.exit(0);
 		}
 
@@ -53,41 +55,72 @@ public class MSkRMSMain {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		double[] eps_vals = {0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1};
-		for (int k = 2; k <= 5; k++) {
-			for (double eps : eps_vals) {
-				int sample_size = (int) (max_sample_size / Math.round(eps / 0.0005));
-				System.out.println(eps + " " + sample_size);
-				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-				writeHeader(wr_result, dataPath, k, eps, sample_size);
-				writeHeader(wr_time, dataPath, k, eps, sample_size);
-				wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
-						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+		int sample_size = calculateSampleSize(dim, k, r, data_size, init_size, 1000, max_sample_size, data, samples);
+		double eps = 0.0001;
+		if (sample_size == 1000)
+			eps = calculateEpsValue(dim, k, r, data_size, init_size, sample_size, data, samples);
+		System.out.println(r + " " + sample_size + " " + eps);
 
-				int interval = workLoad.size() / 10;
-				int output_id = 0;
-				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-					inst.update(workLoad.get(opr_id));
-					if (opr_id % interval == interval - 1) {
-						wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
-						wr_time.write(Math.round(inst.addTreeTime) + " ");
-						wr_time.write(Math.round(inst.addCovTime) + " ");
-						wr_time.write(Math.round(inst.delTreeTime) + " ");
-						wr_time.write(Math.round(inst.delCovTime) + "\n");
+		MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
 
-						writeResult(wr_result, output_id, inst, data);
-						output_id += 1;
+		writeHeader(wr_result, dataPath, k, r, eps);
+		writeHeader(wr_time, dataPath, k, r, eps);
+		wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
+				+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
-						wr_result.flush();
-						wr_time.flush();
-					}
-				}
-				inst = null;
-				System.gc();
+		int interval = workLoad.size() / 10;
+		int output_id = 0;
+		for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+			inst.update(workLoad.get(opr_id));
+			if (opr_id % interval == interval - 1) {
+				wr_time.write("idx=" + output_id + " ");
+				wr_time.write(Math.round(inst.addTreeTime) + " ");
+				wr_time.write(Math.round(inst.addCovTime) + " ");
+				wr_time.write(Math.round(inst.delTreeTime) + " ");
+				wr_time.write(Math.round(inst.delCovTime) + "\n");
+
+				writeResult(wr_result, output_id, inst, data);
+				output_id += 1;
+				wr_result.flush();
+				wr_time.flush();
 			}
 		}
+
+		inst = null;
+		System.gc();
 		wr_result.close();
 		wr_time.close();
+	}
+
+	private static double calculateEpsValue(int dim, int k, int r, int data_size, int init_size, int sample_size,
+			double[][] data, double[][] samples) {
+		double eps = 0.0001, max_eps = 0.5;
+		while (eps < max_eps) {
+			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
+			int mr = test_inst.maxInst.mr;
+			test_inst = null;
+
+			if (mr <= sample_size / 10) {
+				eps *= 2;
+			} else
+				return eps;
+		}
+		return 0.1;
+	}
+
+	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int sample_size,
+			int max_sample_size, double[][] data, double[][] samples) {
+		while (sample_size < max_sample_size) {
+			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.001, data_size, init_size, sample_size, data, samples);
+			int test_size = test_inst.result().size();
+			test_inst = null;
+
+			if (test_size >= r + 5)
+				return sample_size;
+			else
+				sample_size *= 2;
+		}
+		return max_sample_size;
 	}
 
 	private static double[][] readDataFile(String filePath) {
@@ -171,7 +204,7 @@ public class MSkRMSMain {
 		}
 	}
 
-	private static void writeResult(BufferedWriter wr, int idx, MinSizeRMS inst, double[][] data) throws IOException {
+	private static void writeResult(BufferedWriter wr, int idx, MinErrorRMS inst, double[][] data) throws IOException {
 		DecimalFormat df = new DecimalFormat("0.000000");
 		wr.write("index " + idx + " " + inst.result().size() + "\n");
 		for (int t_idx : inst.result()) {
@@ -181,11 +214,24 @@ public class MSkRMSMain {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int sample_size)
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps)
 			throws IOException {
 		wr.write("header " + filePath + " ");
 		wr.write("k=" + k + " ");
-		wr.write("eps=" + eps + " ");
-		wr.write("m=" + sample_size + "\n");
+		wr.write("r=" + r + " ");
+		wr.write("eps=" + eps + "\n");
+	}
+	
+	private static int decideSampleSize(int dim) {
+		int size;
+		if (dim <= 4)
+			size = 200000;
+		else if (dim <= 6)
+			size = 300000;
+		else if (dim <= 8)
+			size = 400000;
+		else
+			size = 500000;
+		return size;
 	}
 }

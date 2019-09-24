@@ -40,7 +40,7 @@ public class MS1RMSMain {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_sample_size = decideSampleSize(dim);
+		int max_sample_size = 500000;
 		double[][] samples = readUtilFile(dim, max_sample_size);
 		if (samples == null) {
 			System.err.println("error in reading samples");
@@ -53,12 +53,11 @@ public class MS1RMSMain {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		int sample_size = max_sample_size;
-		double eps = 0.0001;
+		double[] eps_vals = {0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1};
 		int k = 1;
 
-		boolean flag = true;
-		while (flag) {
+		for (double eps : eps_vals) {
+			int sample_size = (int) (max_sample_size / Math.round(eps / 0.0005));
 			System.out.println(eps + " " + sample_size);
 			MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
 			writeHeader(wr_result, dataPath, k, eps, sample_size);
@@ -84,18 +83,8 @@ public class MS1RMSMain {
 					wr_time.flush();
 				}
 			}
-
-			if (inst.result().size() <= dim) {
-				inst = null;
-				System.gc();
-				flag = false;
-			}
-
 			inst = null;
 			System.gc();
-			
-			sample_size /= 2;
-			eps *= 2.0;
 		}
 		wr_result.close();
 		wr_time.close();
@@ -180,19 +169,6 @@ public class MS1RMSMain {
 			e.printStackTrace();
 			return null;
 		}
-	}
-
-	private static int decideSampleSize(int dim) {
-		int size;
-		if (dim <= 4)
-			size = 200000;
-		else if (dim <= 6)
-			size = 300000;
-		else if (dim <= 8)
-			size = 400000;
-		else
-			size = 500000;
-		return size;
 	}
 
 	private static void writeResult(BufferedWriter wr, int idx, MinSizeRMS inst, double[][] data) throws IOException {

@@ -9,7 +9,7 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class MSkRMSMain {
+public class TestDataSizeMS {
 
 	public static void main(String[] args) {
 		try {
@@ -25,80 +25,78 @@ public class MSkRMSMain {
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
-		double[][] data = readDataFile(dataPath);
-		if (data == null) {
-			System.err.println("error in reading dataset");
-			System.exit(0);
-		}
-
-		int[] toBeDeleted = readWorkload(dataPath);
-		if (toBeDeleted == null) {
-			System.err.println("error in reading workload");
-			System.exit(0);
-		}
-
-		int data_size = data.length, dim = data[0].length - 1;
-		int init_size = data_size - toBeDeleted.length;
-
-		int max_sample_size = 500000;
-		double[][] samples = readUtilFile(dim, max_sample_size);
-		if (samples == null) {
-			System.err.println("error in reading samples");
-			System.exit(0);
-		}
-
-		List<TupleOpr> workLoad = new ArrayList<>();
-		for (int idx = init_size; idx < data_size; idx++)
-			workLoad.add(new TupleOpr(idx, 1));
-		for (int idx : toBeDeleted)
-			workLoad.add(new TupleOpr(idx, -1));
-
-		double[] eps_vals = {0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1};
-		for (int k = 2; k <= 5; k++) {
-			for (double eps : eps_vals) {
-				int sample_size = (int) (max_sample_size / Math.round(eps / 0.0005));
-				System.out.println(eps + " " + sample_size);
-				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-				writeHeader(wr_result, dataPath, k, eps, sample_size);
-				writeHeader(wr_time, dataPath, k, eps, sample_size);
-				wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
-						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-				int interval = workLoad.size() / 10;
-				int output_id = 0;
-				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-					inst.update(workLoad.get(opr_id));
-					if (opr_id % interval == interval - 1) {
-						wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
-						wr_time.write(Math.round(inst.addTreeTime) + " ");
-						wr_time.write(Math.round(inst.addCovTime) + " ");
-						wr_time.write(Math.round(inst.delTreeTime) + " ");
-						wr_time.write(Math.round(inst.delCovTime) + "\n");
-
-						writeResult(wr_result, output_id, inst, data);
-						output_id += 1;
-
-						wr_result.flush();
-						wr_time.flush();
-					}
-				}
-				inst = null;
-				System.gc();
+		int k = 1;
+		double eps = 0.01;
+		for (int data_size = 100_000; data_size <= 1_000_000; data_size += 100_000) {
+			int sample_size = 50000;
+			
+			double[][] data = readDataFile(dataPath, data_size);
+			if (data == null) {
+				System.err.println("error in reading dataset");
+				System.exit(0);
 			}
+
+			int[] toBeDeleted = readWorkload(dataPath, data_size);
+			if (toBeDeleted == null) {
+				System.err.println("error in reading workload");
+				System.exit(0);
+			}
+			
+			int dim = data[0].length - 1;
+			int init_size = data_size - toBeDeleted.length;
+			
+			double[][] samples = readUtilFile(dim, sample_size);
+			if (samples == null) {
+				System.err.println("error in reading samples");
+				System.exit(0);
+			}
+
+			List<TupleOpr> workLoad = new ArrayList<>();
+			for (int idx = init_size; idx < data_size; idx++)
+				workLoad.add(new TupleOpr(idx, 1));
+			for (int idx : toBeDeleted)
+				workLoad.add(new TupleOpr(idx, -1));
+
+			System.out.println(eps + " " + sample_size);
+			MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
+			writeHeader(wr_result, dataPath, k, eps, data_size);
+			writeHeader(wr_time, dataPath, k, eps, data_size);
+			wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
+					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+
+			int interval = workLoad.size() / 10;
+			int output_id = 0;
+			for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+				inst.update(workLoad.get(opr_id));
+				if (opr_id % interval == interval - 1) {
+					wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
+					wr_time.write(Math.round(inst.addTreeTime) + " ");
+					wr_time.write(Math.round(inst.addCovTime) + " ");
+					wr_time.write(Math.round(inst.delTreeTime) + " ");
+					wr_time.write(Math.round(inst.delCovTime) + "\n");
+
+					writeResult(wr_result, output_id, inst, data);
+
+					output_id += 1;
+					wr_result.flush();
+					wr_time.flush();
+				}
+			}
+
+			inst = null;
+			System.gc();
 		}
+
 		wr_result.close();
 		wr_time.close();
 	}
 
-	private static double[][] readDataFile(String filePath) {
+	private static double[][] readDataFile(String filePath, int data_size) {
 		try {
-			Path path = Paths.get(filePath);
-			int size = (int) Files.lines(path).count() - 1;
-
 			BufferedReader br = new BufferedReader(new FileReader(filePath));
 
 			int dim = Integer.parseInt(br.readLine());
-			double[][] data = new double[size][dim + 1];
+			double[][] data = new double[data_size][dim + 1];
 
 			String line;
 			int idx = 0;
@@ -107,6 +105,8 @@ public class MSkRMSMain {
 				for (int d = 0; d < dim; d++)
 					data[idx][d] = Double.parseDouble(tokens[d].trim());
 				idx++;
+				if (idx == data_size)
+					break;
 			}
 			br.close();
 
@@ -149,9 +149,9 @@ public class MSkRMSMain {
 		}
 	}
 
-	private static int[] readWorkload(String filePath) {
+	private static int[] readWorkload(String filePath, int data_size) {
 		try {
-			String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_wl.txt";
+			String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_" + data_size + "_wl.txt";
 			Path path = Paths.get(wlPath);
 			int size = (int) Files.lines(path).count();
 
@@ -181,11 +181,11 @@ public class MSkRMSMain {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int sample_size)
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int data_size)
 			throws IOException {
 		wr.write("header " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("eps=" + eps + " ");
-		wr.write("m=" + sample_size + "\n");
+		wr.write("n=" + data_size + "\n");
 	}
 }
