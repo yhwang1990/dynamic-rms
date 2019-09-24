@@ -117,7 +117,7 @@ public class TestDataSizeME {
 			int test_size = test_inst.result().size();
 			test_inst = null;
 
-			if (test_size >= r + 4)
+			if (test_size >= r + 5)
 				return sample_size;
 			else
 				sample_size *= 2;

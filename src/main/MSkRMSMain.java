@@ -53,14 +53,15 @@ public class MSkRMSMain {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		double[] eps_vals = {0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1};
+		double[] eps = {0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1};
+		int[] m = {400000, 300000, 200000, 100000, 75000, 50000, 25000, 10000};
+		
 		for (int k = 2; k <= 5; k++) {
-			for (double eps : eps_vals) {
-				int sample_size = (int) (max_sample_size / Math.round(eps / 0.0005));
-				System.out.println(eps + " " + sample_size);
-				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-				writeHeader(wr_result, dataPath, k, eps, sample_size);
-				writeHeader(wr_time, dataPath, k, eps, sample_size);
+			for (int i = 0; i < 8; i++) {
+				System.out.println(eps[i] + " " + m[i]);
+				MinSizeRMS inst = new MinSizeRMS(dim, k, eps[i], data_size, init_size, m[i], data, samples);
+				writeHeader(wr_result, dataPath, k, eps[i], m[i]);
+				writeHeader(wr_time, dataPath, k, eps[i], m[i]);
 				wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
 						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 

@@ -42,7 +42,7 @@ public class TestDimME {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_sample_size = decideSampleSize(dim);
+		int max_sample_size = 500000;
 		double[][] samples = readUtilFile(dim, max_sample_size);
 		if (samples == null) {
 			System.err.println("error in reading sample file");
@@ -220,18 +220,5 @@ public class TestDimME {
 		wr.write("k=" + k + " ");
 		wr.write("r=" + r + " ");
 		wr.write("eps=" + eps + "\n");
-	}
-	
-	private static int decideSampleSize(int dim) {
-		int size;
-		if (dim <= 4)
-			size = 200000;
-		else if (dim <= 6)
-			size = 300000;
-		else if (dim <= 8)
-			size = 400000;
-		else
-			size = 500000;
-		return size;
 	}
 }

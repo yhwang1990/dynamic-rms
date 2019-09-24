@@ -26,9 +26,9 @@ public class TestDataSizeMS {
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
 		int k = 1;
-		double eps = 0.01;
+		double eps = 0.005;
 		for (int data_size = 100_000; data_size <= 1_000_000; data_size += 100_000) {
-			int sample_size = 50000;
+			int sample_size = 100000;
 			
 			double[][] data = readDataFile(dataPath, data_size);
 			if (data == null) {

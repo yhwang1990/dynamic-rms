@@ -27,7 +27,7 @@ public class TestDimMS {
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
 		int k = 1;
-		double eps = 0.01;
+		double eps = 0.005;
 
 		double[][] data = readDataFile(dataPath);
 		if (data == null) {
@@ -43,7 +43,7 @@ public class TestDimMS {
 
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
-		int sample_size = decideSampleSize(dim);
+		int sample_size = 100000;
 
 		double[][] samples = readUtilFile(dim, sample_size);
 		if (samples == null) {
@@ -186,18 +186,5 @@ public class TestDimMS {
 		wr.write("header " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("eps=" + eps + "\n");
-	}
-	
-	private static int decideSampleSize(int dim) {
-		int size;
-		if (dim <= 4)
-			size = 20000;
-		else if (dim <= 6)
-			size = 30000;
-		else if (dim <= 8)
-			size = 40000;
-		else
-			size = 50000;
-		return size;
 	}
 }
