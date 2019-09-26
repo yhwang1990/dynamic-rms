@@ -43,7 +43,7 @@ public class TestDataSizeMS {
 			int dim = data[0].length - 1;
 			int init_size = data_size - toBeDeleted.length;
 			
-			int max_m = dim + 1 << 20 - 1;
+			int max_m = dim + (1 << 20) - 1;
 			double[][] samples = readUtilFile(dim, max_m);
 			if (samples == null) {
 				System.err.println("error in reading samples");
@@ -57,7 +57,7 @@ public class TestDataSizeMS {
 				workLoad.add(new TupleOpr(idx, -1));
 
 			int m = max_m;
-			while (m >= dim + 1 << 10 - 1) {
+			while (m >= dim + (1 << 10) - 1) {
 				System.out.println(eps + " " + m);
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
 				writeHeader(wr_result, dataPath, k, eps, m, data_size);

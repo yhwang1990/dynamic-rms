@@ -40,7 +40,7 @@ public class MEkRMSMain {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_m = dim + 1 << 20 - 1;
+		int max_m = dim + (1 << 20) - 1;
 		;
 		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
@@ -56,7 +56,7 @@ public class MEkRMSMain {
 
 		for (int k = 2; k <= 5; k++) {
 			boolean flag = false;
-			int min_m = dim + 1 << 10 - 1;
+			int min_m = dim + (1 << 10) - 1;
 			for (int r = 5; r <= 100; r += 5) {
 				if (flag)
 					break;
@@ -66,7 +66,7 @@ public class MEkRMSMain {
 				int m = calculateSampleSize(dim, k, r, data_size, init_size, min_m, max_m, data, samples);
 				min_m = m;
 				double eps = 0.0001;
-				if (m == dim + 1 << 10 - 1)
+				if (m == dim + (1 << 10) - 1)
 					eps = calculateEpsValue(dim, k, r, data_size, init_size, m, data, samples);
 				System.out.println(r + " " + m + " " + eps);
 
@@ -114,7 +114,7 @@ public class MEkRMSMain {
 			int mr = test_inst.maxInst.mr;
 			test_inst = null;
 
-			if (mr <= m / 2) {
+			if (mr <= m / 5) {
 				eps *= 2;
 			} else
 				return eps;

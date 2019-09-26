@@ -40,7 +40,7 @@ public class ME1RMSMain {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_m = dim + 1 << 20 - 1;
+		int max_m = dim + (1 << 20) - 1;
 		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
 			System.err.println("error in reading sample file");
@@ -54,7 +54,7 @@ public class ME1RMSMain {
 			workLoad.add(new TupleOpr(idx, -1));
 
 		boolean flag = false;
-		int min_m = dim + 1 << 10 - 1;
+		int min_m = dim + (1 << 10) - 1;
 		int k = 1;
 		for (int r = 5; r <= 100; r += 5) {
 			if (flag)
@@ -65,7 +65,7 @@ public class ME1RMSMain {
 			int m = calculateSampleSize(dim, k, r, data_size, init_size, min_m, max_m, data, samples);
 			min_m = m;
 			double eps = 0.0001;
-			if (m == dim + 1 << 10 - 1)
+			if (m == dim + (1 << 10) - 1)
 				eps = calculateEpsValue(dim, k, r, data_size, init_size, m, data, samples);
 			System.out.println(r + " " + m + " " + eps);
 
@@ -94,7 +94,7 @@ public class ME1RMSMain {
 				}
 			}
 
-			if (inst.result().size() <= r - 4)
+			if (inst.result().size() <= r - 5)
 				flag = true;
 
 			inst = null;
@@ -112,7 +112,7 @@ public class ME1RMSMain {
 			int mr = test_inst.maxInst.mr;
 			test_inst = null;
 
-			if (mr <= sample_size / 2)
+			if (mr <= sample_size / 5)
 				eps *= 2;
 			else
 				return eps;

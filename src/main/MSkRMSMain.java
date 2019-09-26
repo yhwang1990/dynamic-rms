@@ -40,7 +40,7 @@ public class MSkRMSMain {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_m = dim + 1 << 20 - 1;
+		int max_m = dim + (1 << 20) - 1;
 		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
 			System.err.println("error in reading samples");

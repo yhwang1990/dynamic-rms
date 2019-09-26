@@ -42,7 +42,7 @@ public class TestDimME {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_m = dim + 1 << 20 - 1;
+		int max_m = dim + (1 << 20) - 1;
 		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
 			System.err.println("error in reading sample file");
@@ -55,9 +55,9 @@ public class TestDimME {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		int m = calculateSampleSize(dim, k, r, data_size, init_size, 1000, max_m, data, samples);
+		int m = calculateSampleSize(dim, k, r, data_size, init_size, dim + (1 << 10) - 1, max_m, data, samples);
 		double eps = 0.0001;
-		if (m == dim + 1 << 10 - 1)
+		if (m == dim + (1 << 10) - 1)
 			eps = calculateEpsValue(dim, k, r, data_size, init_size, m, data, samples);
 		System.out.println(r + " " + m + " " + eps);
 
