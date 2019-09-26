@@ -40,8 +40,9 @@ public class MEkRMSMain {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_sample_size = decideSampleSize(dim);
-		double[][] samples = readUtilFile(dim, max_sample_size);
+		int max_m = dim + 1 << 20 - 1;
+		;
+		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
 			System.err.println("error in reading sample file");
 			System.exit(0);
@@ -53,30 +54,27 @@ public class MEkRMSMain {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		
-		
 		for (int k = 2; k <= 5; k++) {
 			boolean flag = false;
-			int last_sample_size = 1000;
+			int min_m = dim + 1 << 10 - 1;
 			for (int r = 5; r <= 100; r += 5) {
 				if (flag)
 					break;
 				if (r < dim)
 					continue;
 
-				int sample_size = calculateSampleSize(dim, k, r, data_size, init_size, last_sample_size,
-						max_sample_size, data, samples);
-				last_sample_size = sample_size;
+				int m = calculateSampleSize(dim, k, r, data_size, init_size, min_m, max_m, data, samples);
+				min_m = m;
 				double eps = 0.0001;
-				if (sample_size == 1000)
-					eps = calculateEpsValue(dim, k, r, data_size, init_size, sample_size, data, samples);
-				System.out.println(r + " " + sample_size + " " + eps);
+				if (m == dim + 1 << 10 - 1)
+					eps = calculateEpsValue(dim, k, r, data_size, init_size, m, data, samples);
+				System.out.println(r + " " + m + " " + eps);
 
-				MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
+				MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
 
-				writeHeader(wr_result, dataPath, k, r, eps, sample_size);
-				writeHeader(wr_time, dataPath, k, r, eps, sample_size);
-				wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
+				writeHeader(wr_result, dataPath, k, r, eps, m);
+				writeHeader(wr_time, dataPath, k, r, eps, m);
+				wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
 						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
 				int interval = workLoad.size() / 10;
@@ -102,41 +100,41 @@ public class MEkRMSMain {
 
 				inst = null;
 				System.gc();
-			} 
+			}
 		}
 		wr_result.close();
 		wr_time.close();
 	}
 
-	private static double calculateEpsValue(int dim, int k, int r, int data_size, int init_size, int sample_size,
-			double[][] data, double[][] samples) {
+	private static double calculateEpsValue(int dim, int k, int r, int data_size, int init_size, int m, double[][] data,
+			double[][] samples) {
 		double eps = 0.0001, max_eps = 0.5;
 		while (eps < max_eps) {
-			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
+			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
 			int mr = test_inst.maxInst.mr;
 			test_inst = null;
 
-			if (mr <= sample_size / 10) {
+			if (mr <= m / 2) {
 				eps *= 2;
 			} else
 				return eps;
 		}
-		return 0.1;
+		return 0.5;
 	}
 
-	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int sample_size,
-			int max_sample_size, double[][] data, double[][] samples) {
-		while (sample_size < max_sample_size) {
-			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.0001, data_size, init_size, sample_size, data, samples);
+	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int m, int max_m,
+			double[][] data, double[][] samples) {
+		while (m < max_m) {
+			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.0001, data_size, init_size, m, data, samples);
 			int test_size = test_inst.result().size();
 			test_inst = null;
 
-			if (test_size >= r + 4)
-				return sample_size;
+			if (test_size >= r + 5)
+				return m;
 			else
-				sample_size *= 2;
+				m = (m - dim + 1) * 2 + (dim - 1);
 		}
-		return max_sample_size;
+		return max_m;
 	}
 
 	private static double[][] readDataFile(String filePath) {
@@ -220,19 +218,6 @@ public class MEkRMSMain {
 		}
 	}
 
-	private static int decideSampleSize(int dim) {
-		int size;
-		if (dim <= 4)
-			size = 200000;
-		else if (dim <= 6)
-			size = 300000;
-		else if (dim <= 8)
-			size = 400000;
-		else
-			size = 500000;
-		return size;
-	}
-
 	private static void writeResult(BufferedWriter wr, int idx, MinErrorRMS inst, double[][] data) throws IOException {
 		DecimalFormat df = new DecimalFormat("0.000000");
 		wr.write("index " + idx + " " + inst.result().size() + "\n");
@@ -243,7 +228,8 @@ public class MEkRMSMain {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int sample_size) throws IOException {
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int sample_size)
+			throws IOException {
 		wr.write("header " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("r=" + r + " ");

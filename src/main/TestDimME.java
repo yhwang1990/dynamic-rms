@@ -42,8 +42,8 @@ public class TestDimME {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_sample_size = 500000;
-		double[][] samples = readUtilFile(dim, max_sample_size);
+		int max_m = dim + 1 << 20 - 1;
+		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
 			System.err.println("error in reading sample file");
 			System.exit(0);
@@ -55,17 +55,17 @@ public class TestDimME {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		int sample_size = calculateSampleSize(dim, k, r, data_size, init_size, 1000, max_sample_size, data, samples);
+		int m = calculateSampleSize(dim, k, r, data_size, init_size, 1000, max_m, data, samples);
 		double eps = 0.0001;
-		if (sample_size == 1000)
-			eps = calculateEpsValue(dim, k, r, data_size, init_size, sample_size, data, samples);
-		System.out.println(r + " " + sample_size + " " + eps);
+		if (m == dim + 1 << 10 - 1)
+			eps = calculateEpsValue(dim, k, r, data_size, init_size, m, data, samples);
+		System.out.println(r + " " + m + " " + eps);
 
-		MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
+		MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
 
-		writeHeader(wr_result, dataPath, k, r, eps);
-		writeHeader(wr_time, dataPath, k, r, eps);
-		wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
+		writeHeader(wr_result, dataPath, k, r, eps, m);
+		writeHeader(wr_time, dataPath, k, r, eps, m);
+		wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
 				+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
 		int interval = workLoad.size() / 10;
@@ -85,9 +85,9 @@ public class TestDimME {
 				wr_time.flush();
 			}
 		}
-
 		inst = null;
 		System.gc();
+		
 		wr_result.close();
 		wr_time.close();
 	}
@@ -100,27 +100,27 @@ public class TestDimME {
 			int mr = test_inst.maxInst.mr;
 			test_inst = null;
 
-			if (mr <= sample_size / 10) {
+			if (mr <= sample_size / 2) {
 				eps *= 2;
 			} else
 				return eps;
 		}
-		return 0.1;
+		return max_eps;
 	}
 
-	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int sample_size,
-			int max_sample_size, double[][] data, double[][] samples) {
-		while (sample_size < max_sample_size) {
-			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.001, data_size, init_size, sample_size, data, samples);
+	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int m,
+			int max_m, double[][] data, double[][] samples) {
+		while (m < max_m) {
+			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.001, data_size, init_size, m, data, samples);
 			int test_size = test_inst.result().size();
 			test_inst = null;
 
 			if (test_size >= r + 5)
-				return sample_size;
+				return m;
 			else
-				sample_size *= 2;
+				m = (m - dim + 1) * 2 + (dim - 1);
 		}
-		return max_sample_size;
+		return max_m;
 	}
 
 	private static double[][] readDataFile(String filePath) {
@@ -214,11 +214,12 @@ public class TestDimME {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps)
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int m)
 			throws IOException {
 		wr.write("header " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("r=" + r + " ");
-		wr.write("eps=" + eps + "\n");
+		wr.write("eps=" + eps + " ");
+		wr.write("m=" + m + "\n");
 	}
 }

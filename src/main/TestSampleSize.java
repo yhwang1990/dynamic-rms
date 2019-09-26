@@ -42,11 +42,11 @@ public class TestSampleSize {
 
 		int k = 1;
 		double eps = 0.0001;
-		for (int sample_size = 1000; sample_size <= 1024000; sample_size *= 2) {
-			if (sample_size > 1000000)
-				sample_size = 1000000;
+		
+		int m = dim + 1;
+		while (m <= dim + 1 << 20 - 1) {
+			double[][] samples = readUtilFile(dim, m);
 			
-			double[][] samples = readUtilFile(dim, sample_size);
 			if (samples == null) {
 				System.err.println("error in reading samples");
 				System.exit(0);
@@ -58,11 +58,11 @@ public class TestSampleSize {
 			for (int idx : toBeDeleted)
 				workLoad.add(new TupleOpr(idx, -1));
 
-			System.out.println(eps + " " + sample_size);
-			MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-			writeHeader(wr_result, dataPath, k, eps, sample_size);
-			writeHeader(wr_time, dataPath, k, eps, sample_size);
-			wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
+			System.out.println(eps + " " + m);
+			MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
+			writeHeader(wr_result, dataPath, k, eps, m);
+			writeHeader(wr_time, dataPath, k, eps, m);
+			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
 					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
 			int interval = workLoad.size() / 10;
@@ -86,6 +86,8 @@ public class TestSampleSize {
 
 			inst = null;
 			System.gc();
+			
+			m = (m - dim + 1) * 2 + (dim - 1);
 		}
 
 		wr_result.close();

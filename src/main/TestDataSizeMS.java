@@ -26,10 +26,8 @@ public class TestDataSizeMS {
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
 		int k = 1;
-		double eps = 0.005;
+		double eps = 0.0001;
 		for (int data_size = 100_000; data_size <= 1_000_000; data_size += 100_000) {
-			int sample_size = 100000;
-			
 			double[][] data = readDataFile(dataPath, data_size);
 			if (data == null) {
 				System.err.println("error in reading dataset");
@@ -45,7 +43,8 @@ public class TestDataSizeMS {
 			int dim = data[0].length - 1;
 			int init_size = data_size - toBeDeleted.length;
 			
-			double[][] samples = readUtilFile(dim, sample_size);
+			int max_m = dim + 1 << 20 - 1;
+			double[][] samples = readUtilFile(dim, max_m);
 			if (samples == null) {
 				System.err.println("error in reading samples");
 				System.exit(0);
@@ -57,36 +56,38 @@ public class TestDataSizeMS {
 			for (int idx : toBeDeleted)
 				workLoad.add(new TupleOpr(idx, -1));
 
-			System.out.println(eps + " " + sample_size);
-			MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, sample_size, data, samples);
-			writeHeader(wr_result, dataPath, k, eps, data_size);
-			writeHeader(wr_time, dataPath, k, eps, data_size);
-			wr_time.write("init_time=" + Math.round(inst.initTime) + " wl_size=" + workLoad.size() + " inserts="
-					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+			int m = max_m;
+			while (m >= dim + 1 << 10 - 1) {
+				System.out.println(eps + " " + m);
+				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
+				writeHeader(wr_result, dataPath, k, eps, m, data_size);
+				writeHeader(wr_time, dataPath, k, eps, m, data_size);
+				wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
+						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+				int interval = workLoad.size() / 10;
+				int output_id = 0;
+				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+					inst.update(workLoad.get(opr_id));
+					if (opr_id % interval == interval - 1) {
+						wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
+						wr_time.write(Math.round(inst.addTreeTime) + " ");
+						wr_time.write(Math.round(inst.addCovTime) + " ");
+						wr_time.write(Math.round(inst.delTreeTime) + " ");
+						wr_time.write(Math.round(inst.delCovTime) + "\n");
 
-			int interval = workLoad.size() / 10;
-			int output_id = 0;
-			for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-				inst.update(workLoad.get(opr_id));
-				if (opr_id % interval == interval - 1) {
-					wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
-					wr_time.write(Math.round(inst.addTreeTime) + " ");
-					wr_time.write(Math.round(inst.addCovTime) + " ");
-					wr_time.write(Math.round(inst.delTreeTime) + " ");
-					wr_time.write(Math.round(inst.delCovTime) + "\n");
+						writeResult(wr_result, output_id, inst, data);
 
-					writeResult(wr_result, output_id, inst, data);
-
-					output_id += 1;
-					wr_result.flush();
-					wr_time.flush();
+						output_id += 1;
+						wr_result.flush();
+						wr_time.flush();
+					}
 				}
+				inst = null;
+				System.gc();
+				
+				m = (m - dim + 1) / 2 + (dim - 1);
 			}
-
-			inst = null;
-			System.gc();
 		}
-
 		wr_result.close();
 		wr_time.close();
 	}
@@ -181,11 +182,12 @@ public class TestDataSizeMS {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int data_size)
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int m, int n)
 			throws IOException {
 		wr.write("header " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("eps=" + eps + " ");
-		wr.write("n=" + data_size + "\n");
+		wr.write("m=" + m + " ");
+		wr.write("n=" + n + "\n");
 	}
 }
