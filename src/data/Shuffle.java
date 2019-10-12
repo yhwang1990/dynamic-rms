@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Shuffle {
     public static void main(String[] args) {
-        shuffle("datasets/Airline.txt", "datasets/Airline2.txt");
+        shuffle("../MovieLens2.txt", "../MovieLens.txt");
     }
 
     private static void shuffle(String oldFile, String newFile) {

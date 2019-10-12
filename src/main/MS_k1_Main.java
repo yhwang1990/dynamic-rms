@@ -9,7 +9,7 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class MS1RMSMain {
+public class MS_k1_Main {
 
 	public static void main(String[] args) {
 		try {
@@ -55,38 +55,51 @@ public class MS1RMSMain {
 
 		int k = 1;
 
-		int m = max_m;
-		double eps = 0.0001;
-		while (m >= dim + 1) {
-			System.out.println(eps + " " + m);
-			MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
-			writeHeader(wr_result, dataPath, k, eps, m);
-			writeHeader(wr_time, dataPath, k, eps, m);
-			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
-					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-			int interval = workLoad.size() / 10;
-			int output_id = 0;
-			for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-				inst.update(workLoad.get(opr_id));
-				if (opr_id % interval == interval - 1) {
-					wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
-					wr_time.write(Math.round(inst.addTreeTime) + " ");
-					wr_time.write(Math.round(inst.addCovTime) + " ");
-					wr_time.write(Math.round(inst.delTreeTime) + " ");
-					wr_time.write(Math.round(inst.delCovTime) + "\n");
-
-					writeResult(wr_result, output_id, inst, data);
-					output_id += 1;
-
-					wr_result.flush();
-					wr_time.flush();
+		int m = dim + (1 << 10) - 1;
+		double[] epsVals = {0.0128, 0.0016};
+		for (double eps : epsVals) {
+			int size = -1;
+			while (m <= max_m) {
+				System.out.println(eps + " " + m);
+				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
+				
+				int cur = inst.result().size();
+				if (cur <= size) {
+					inst = null;
+					System.gc();
+					m = (m - dim + 1) * 2 + (dim - 1);
+					continue;
+				} else {
+					size = cur;
 				}
-			}
-			inst = null;
-			System.gc();
+				
+				writeHeader(wr_result, dataPath, k, eps, m);
+				writeHeader(wr_time, dataPath, k, eps, m);
+				wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
+						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
-			m = (m - dim + 1) / 2 + (dim - 1);
+				int interval = workLoad.size() / 10;
+				int output_id = 0;
+				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+					inst.update(workLoad.get(opr_id));
+					if (opr_id % interval == interval - 1) {
+						wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
+						wr_time.write(Math.round(inst.addTreeTime) + " ");
+						wr_time.write(Math.round(inst.addCovTime) + " ");
+						wr_time.write(Math.round(inst.delTreeTime) + " ");
+						wr_time.write(Math.round(inst.delCovTime) + "\n");
+
+						writeResult(wr_result, output_id, inst, data);
+						output_id += 1;
+
+						wr_result.flush();
+						wr_time.flush();
+					}
+				}
+				inst = null;
+				System.gc();
+				m = (m - dim + 1) * 2 + (dim - 1);
+			}
 		}
 		wr_result.close();
 		wr_time.close();

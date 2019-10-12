@@ -1,7 +1,6 @@
 package main;
 
 import structures.MinErrorRMS;
-import structures.MinSizeRMS;
 import utils.TupleOpr;
 import utils.VectorUtil;
 
@@ -10,7 +9,7 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class ME1RMSMain {
+public class ME_k5_Main {
 
 	public static void main(String[] args) {
 		try {
@@ -41,6 +40,7 @@ public class ME1RMSMain {
 		int init_size = data_size - toBeDeleted.length;
 
 		int max_m = dim + (1 << 20) - 1;
+		double min_eps = 0.0001;
 		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
 			System.err.println("error in reading sample file");
@@ -53,86 +53,82 @@ public class ME1RMSMain {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		boolean flag = false;
-		int min_m = dim + (1 << 10) - 1;
-		int k = 1;
-		for (int r = 5; r <= 100; r += 5) {
-			if (flag)
-				break;
-			if (r < dim)
-				continue;
+		for (int k = 2; k <= 5; k++) {
+			int cur_m = dim + (1 << 10) - 1;
+			double cur_eps = 0.1024;
+			
+			for (int r = 5; r <= 50; r += 5) {
+				if (r < dim)
+					continue;
 
-			int m = calculateSampleSize(dim, k, r, data_size, init_size, min_m, max_m, data, samples);
-			min_m = m;
-			double eps = 0.0001;
-			if (m == dim + (1 << 10) - 1)
-				eps = calculateEpsValue(dim, k, r, data_size, init_size, m, data, samples);
-			System.out.println(r + " " + m + " " + eps);
-
-			MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
-
-			writeHeader(wr_result, dataPath, k, r, eps, m);
-			writeHeader(wr_time, dataPath, k, r, eps, m);
-			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
-					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-			int interval = workLoad.size() / 10;
-			int output_id = 0;
-			for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-				inst.update(workLoad.get(opr_id));
-				if (opr_id % interval == interval - 1) {
-					wr_time.write("idx=" + output_id + " ");
-					wr_time.write(Math.round(inst.addTreeTime) + " ");
-					wr_time.write(Math.round(inst.addCovTime) + " ");
-					wr_time.write(Math.round(inst.delTreeTime) + " ");
-					wr_time.write(Math.round(inst.delCovTime) + "\n");
-
-					writeResult(wr_result, output_id, inst, data);
-					output_id += 1;
-					wr_result.flush();
-					wr_time.flush();
+				Pair pair = new Pair(max_m, min_eps);
+				
+				if (cur_eps > min_eps || cur_m < max_m) {
+					pair = getParams(dim, k, r, data_size, init_size, cur_eps, cur_m, data, samples);
+					cur_m = pair.m;
+					cur_eps = pair.eps;
 				}
+				
+				System.out.println(r + " " + pair.m + " " + pair.eps);
+
+				MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, pair.m, data, samples);
+				
+				if (inst.result().size() <= r - 5 && pair.m == max_m && pair.eps < 0.0002) {
+					inst = null;
+					System.gc();
+					break;
+				}
+
+				writeHeader(wr_result, dataPath, k, r, pair.eps, pair.m);
+				writeHeader(wr_time, dataPath, k, r, pair.eps, pair.m);
+				wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
+						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+
+				int interval = workLoad.size() / 10;
+				int output_id = 0;
+				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+					inst.update(workLoad.get(opr_id));
+					if (opr_id % interval == interval - 1) {
+						wr_time.write("idx=" + output_id + " ");
+						wr_time.write(Math.round(inst.addTreeTime) + " ");
+						wr_time.write(Math.round(inst.addCovTime) + " ");
+						wr_time.write(Math.round(inst.delTreeTime) + " ");
+						wr_time.write(Math.round(inst.delCovTime) + "\n");
+
+						writeResult(wr_result, output_id, inst, data);
+						output_id += 1;
+						wr_result.flush();
+						wr_time.flush();
+					}
+				}
+
+				inst = null;
+				System.gc();
 			}
-
-			if (inst.result().size() <= r - 5)
-				flag = true;
-
-			inst = null;
-			System.gc();
 		}
 		wr_result.close();
 		wr_time.close();
 	}
 
-	private static double calculateEpsValue(int dim, int k, int r, int data_size, int init_size, int sample_size,
-			double[][] data, double[][] samples) {
-		double eps = 0.0001, max_eps = 0.5;
-		while (eps < max_eps) {
-			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
-			int mr = test_inst.maxInst.mr;
-			test_inst = null;
+	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double eps,
+			int m, double[][] data, double[][] samples) {
+		int max_m = Math.min((m - dim + 1) * 4 + (dim - 1), dim + (1 << 20) - 1);
+		while (eps > 1e-4 - 1e-9) {
+			while (m <= max_m) {
+				MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
+				int mr = test_inst.maxInst.mr;
+				int size = test_inst.result().size();
+				test_inst = null;
 
-			if (mr <= sample_size / 5)
-				eps *= 2;
-			else
-				return eps;
+				if (mr <= m / 2 && r == size)
+					return new Pair(m, eps);
+				else
+					m = (m - dim + 1) * 2 + (dim - 1);
+			}
+			m = (m - dim + 1) / 4 + (dim - 1);
+			eps /= 2;
 		}
-		return max_eps;
-	}
-
-	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int m, int max_m,
-			double[][] data, double[][] samples) {
-		while (m < max_m) {
-			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.0001, data_size, init_size, m, data, samples);
-			int test_size = test_inst.result().size();
-			test_inst = null;
-
-			if (test_size >= r + 5)
-				return m;
-			else
-				m = (m - dim + 1) * 2 + (dim - 1);
-		}
-		return max_m;
+		return new Pair(dim + (1 << 20) - 1, 0.0001);
 	}
 
 	private static double[][] readDataFile(String filePath) {
@@ -233,5 +229,15 @@ public class ME1RMSMain {
 		wr.write("r=" + r + " ");
 		wr.write("eps=" + eps + " ");
 		wr.write("m=" + sample_size + "\n");
+	}
+	
+	private static class Pair {
+		int m;
+		double eps;
+		
+		public Pair(int m, double eps) {
+			this.m = m;
+			this.eps = eps;
+		}
 	}
 }

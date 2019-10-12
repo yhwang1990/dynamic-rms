@@ -2,6 +2,8 @@ package structures;
 
 import java.util.*;
 
+import utils.VectorUtil;
+
 public class SetCover {
     private Map<Integer, HashSet<Integer>> mapping;
 
@@ -256,8 +258,10 @@ public class SetCover {
         for (int u_idx : solInfo.cov) {
             int new_level = -1, new_idx = -1, cand_size = 0;
             for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
-            	if(msInst.dualTree.tIdx.isDeleted[idx])
-            		continue;
+            	if(msInst.dualTree.tIdx.isDeleted[idx]) {
+            		System.out.println(idx + ":" + VectorUtil.inner_product(msInst.dualTree.tIdx.data[idx], msInst.dualTree.uIdx.samples[u_idx]) + "," + msInst.dualTree.uIdx.topKResults[u_idx].k_score);
+            		System.exit(0);
+            	}
             	
                 if (sol.containsKey(idx) && sol.get(idx).level_idx > new_level) {
                     new_level = sol.get(idx).level_idx;
@@ -290,8 +294,10 @@ public class SetCover {
                     }
 
                     for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
-                    	if(msInst.dualTree.tIdx.isDeleted[idx])
-                    		continue;
+                    	if(msInst.dualTree.tIdx.isDeleted[idx]) {
+                    		System.out.println(idx + ":" + VectorUtil.inner_product(msInst.dualTree.tIdx.data[idx], msInst.dualTree.uIdx.samples[u_idx]) + "," + msInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                    		System.exit(0);
+                    	}
                     	
                         levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -317,8 +323,10 @@ public class SetCover {
 
                 if (new_level != old_level) {
                     for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
-                    	if(msInst.dualTree.tIdx.isDeleted[idx])
-                    		continue;
+                    	if(msInst.dualTree.tIdx.isDeleted[idx]) {
+                    		System.out.println(idx + ":" + VectorUtil.inner_product(msInst.dualTree.tIdx.data[idx], msInst.dualTree.uIdx.samples[u_idx]) + "," + msInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                    		System.exit(0);
+                    	}
                     	
                         levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -359,8 +367,10 @@ public class SetCover {
             u_level[u_idx] = new_level;
 
             for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
-            	if(msInst.dualTree.tIdx.isDeleted[idx])
-            		continue;
+            	if(msInst.dualTree.tIdx.isDeleted[idx]) {
+            		System.out.println(idx + ":" + VectorUtil.inner_product(msInst.dualTree.tIdx.data[idx], msInst.dualTree.uIdx.samples[u_idx]) + "," + msInst.dualTree.uIdx.topKResults[u_idx].k_score);
+            		System.exit(0);
+            	}
             	
                 levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -435,8 +445,10 @@ public class SetCover {
                         }
 
                         for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
-                        	if(msInst.dualTree.tIdx.isDeleted[idx])
-                        		continue;
+                        	if(msInst.dualTree.tIdx.isDeleted[idx]) {
+                        		System.out.println(idx + ":" + VectorUtil.inner_product(msInst.dualTree.tIdx.data[idx], msInst.dualTree.uIdx.samples[u_idx]) + "," + msInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                        		System.exit(0);
+                        	}
                         	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -470,8 +482,10 @@ public class SetCover {
                             continue;
 
                         for (int idx : msInst.dualTree.uIdx.topKResults[u_idx].results) {
-                        	if(msInst.dualTree.tIdx.isDeleted[idx])
-                        		continue;
+                        	if(msInst.dualTree.tIdx.isDeleted[idx]) {
+                        		System.out.println(idx + ":" + VectorUtil.inner_product(msInst.dualTree.tIdx.data[idx], msInst.dualTree.uIdx.samples[u_idx]) + "," + msInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                        		System.exit(0);
+                        	}
                         	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 

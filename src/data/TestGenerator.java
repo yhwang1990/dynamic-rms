@@ -8,10 +8,12 @@ import java.text.DecimalFormat;
 public class TestGenerator {
 
     public static void main(String[] args) {
-        for (int d = 3; d <= 10; d++) {
-            double[][] data = UtilityGenerator.uniformGenerator(d, 1_000_000);
-            writeToFile(d, data);
-        }
+//        for (int d = 3; d <= 10; d++) {
+//            double[][] data = UtilityGenerator.uniformGenerator(d, 1_000_000);
+//            writeToFile(d, data);
+//        }
+    	double[][] data = UtilityGenerator.uniformGenerator(12, 1_000_000);
+        writeToFile(12, data);
     }
 
     private static void writeToFile(int dim, double[][] data) {

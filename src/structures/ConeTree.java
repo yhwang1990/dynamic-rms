@@ -14,7 +14,7 @@ public class ConeTree {
     private double eps;
     private double tau;
 
-    private double[][] samples;
+    double[][] samples;
     public TopKResult[] topKResults;
 
     public ConeTree(int dim, int k, double eps, double tau, DualTree dualTree) {
@@ -30,9 +30,8 @@ public class ConeTree {
         this.samples = dualTree.samples;
 
         this.topKResults = new TopKResult[sample_size];
-        for (int i = 0; i < sample_size; i++) {
+        for (int i = 0; i < sample_size; i++)
             this.topKResults[i] = this.dualTree.tIdx.approxTopKSearch(this.k, this.eps, this.samples[i]);
-        }
 
         List<Integer> utilities = new ArrayList<>();
         for (int i = 0; i < sample_size; i++) {
@@ -67,7 +66,7 @@ public class ConeTree {
                     double old_k_score = topKResults[u_idx].k_score;
                     boolean k_updated = topKResults[u_idx].add(u_idx, t_idx, score, opr);
 
-                    if (k_updated && cur_node.min_k_score == old_k_score)
+                    if (k_updated && Math.abs(cur_node.min_k_score - old_k_score) < 1e-9)
                         outdated = true;
                 }
                 if (outdated) {
@@ -77,9 +76,9 @@ public class ConeTree {
                     update_min_k_score(cur_node);
                 }
             } else {
-                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) >= (1 - eps) * cur_node.lc.min_k_score)
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) > (1 - eps) * cur_node.lc.min_k_score - 1e-6)
                     queue.addLast(cur_node.lc);
-                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) >= (1 - eps) * cur_node.rc.min_k_score)
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) > (1 - eps) * cur_node.rc.min_k_score - 1e-6)
                     queue.addLast(cur_node.rc);
             }
         }
@@ -97,24 +96,24 @@ public class ConeTree {
                     double old_k_score = topKResults[u_idx].k_score;
 
                     boolean k_updated = false;
-                    if (score >= topKResults[u_idx].k_score) {
+                    if (score > topKResults[u_idx].k_score - 1e-9 && topKResults[u_idx].results.contains(t_idx)) {
                         k_updated = true;
                         TopKResult newResult = dualTree.tIdx.approxTopKSearch(k, eps, samples[u_idx]);
                         opr.utilities.add(u_idx);
                         TopKResult oldResult = topKResults[u_idx];
                         for (int new_idx : newResult.results) {
-                            if (!oldResult.results.contains(new_idx)) {
+                            if (! oldResult.results.contains(new_idx)) {
                                 opr.oprs.add(new Operations.SetOpr(new_idx, u_idx));
                             }
                         }
                         topKResults[u_idx] = newResult;
                     } else if (topKResults[u_idx].results.contains(t_idx)) {
                     	topKResults[u_idx].approximate_result.remove(new RankItem(t_idx, score));
-                    	if (topKResults[u_idx].results.remove(t_idx))
-                    		opr.utilities.add(u_idx);
+                    	topKResults[u_idx].results.remove(t_idx);
+                    	opr.utilities.add(u_idx);
                     }
 
-                    if (k_updated && cur_node.min_k_score == old_k_score)
+                    if (k_updated && Math.abs(cur_node.min_k_score - old_k_score) < 1e-9)
                         outdated = true;
                 }
                 if (outdated) {
@@ -124,9 +123,9 @@ public class ConeTree {
                     update_min_k_score(cur_node);
                 }
             } else {
-                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) >= (1.0 - eps) * cur_node.lc.min_k_score - 1.0E-6)
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.lc) > (1.0 - eps) * cur_node.lc.min_k_score - 1.0e-6)
                     queue.addLast(cur_node.lc);
-                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) >= (1.0 - eps) * cur_node.rc.min_k_score - 1.0E-6)
+                if (max_inner_product(dualTree.tIdx.data[t_idx], cur_node.rc) > (1.0 - eps) * cur_node.rc.min_k_score - 1.0e-6)
                     queue.addLast(cur_node.rc);
             }
         }
@@ -145,7 +144,7 @@ public class ConeTree {
         while (par != null) {
             double pre_k_score = par.min_k_score;
             par.min_k_score = Math.min(par.lc.min_k_score, par.rc.min_k_score);
-            if (par.min_k_score == pre_k_score) {
+            if (Math.abs(par.min_k_score - pre_k_score) < 1e-9) {
                 break;
             } else {
                 par = par.par;

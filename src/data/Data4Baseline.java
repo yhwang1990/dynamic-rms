@@ -12,10 +12,10 @@ import java.util.List;
 
 public class Data4Baseline {
     public static void main(String[] args) {
-    	for (int size = 100000; size <= 1000000; size += 100000) {
-    		generateData4Baseline("./dataset/AntiCorr1M_" + size + "_6d.txt");
-		}
-//    	generateData4Baseline("./dataset/Airline.txt");
+//    	for (int size = 100000; size <= 1000000; size += 100000) {
+//    		generateData4Baseline("./dataset/AntiCorr1M_" + size + "_6d.txt");
+//		}
+    	generateData4Baseline("../AirQuality.txt");
     }
 
     private static void generateData4Baseline(String dataPath) {
@@ -41,7 +41,8 @@ public class Data4Baseline {
 
             String datasetName = dataPath.substring(0, dataPath.length() - 4);
 
-            String wlPath = datasetName.split("_")[0] + "_" + data_size + "_wl.txt";
+//            String wlPath = datasetName.split("_")[0] + "_" + data_size + "_wl.txt";
+            String wlPath = datasetName.split("_")[0] + "_wl.txt";
             path = Paths.get(wlPath);
             int wl_size = (int) Files.lines(path).count();
 

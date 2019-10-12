@@ -3,6 +3,8 @@ package structures;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import utils.VectorUtil;
+
 public class MaxInst {
     public int r, mr, max_mr;
     private Map<Integer, HashSet<Integer>> mapping;
@@ -437,8 +439,10 @@ public class MaxInst {
                         }
 
                         for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                        	if(mrInst.dualTree.tIdx.isDeleted[idx])
-                        		continue;
+                        	if(mrInst.dualTree.tIdx.isDeleted[idx]) {
+                        		System.out.println(idx + ":" + VectorUtil.inner_product(mrInst.dualTree.tIdx.data[idx], mrInst.dualTree.uIdx.samples[u_idx]) + "," + mrInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                        		System.exit(0);
+                        	}
                         	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -464,8 +468,10 @@ public class MaxInst {
 
                     if (new_level != old_level) {
                         for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                        	if(mrInst.dualTree.tIdx.isDeleted[idx])
-                        		continue;
+                        	if(mrInst.dualTree.tIdx.isDeleted[idx]) {
+                        		System.out.println(idx + ":" + VectorUtil.inner_product(mrInst.dualTree.tIdx.data[idx], mrInst.dualTree.uIdx.samples[u_idx]) + "," + mrInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                        		System.exit(0);
+                        	}
                         	
                             levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -527,8 +533,11 @@ public class MaxInst {
 
             if (new_level >= 0) {
                 for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                	if(mrInst.dualTree.tIdx.isDeleted[idx])
-                		continue;
+                	if(mrInst.dualTree.tIdx.isDeleted[idx]) {
+                		System.out.println(idx + ":" + VectorUtil.inner_product(mrInst.dualTree.tIdx.data[idx], mrInst.dualTree.uIdx.samples[u_idx]) + "," + mrInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                		System.exit(0);
+                	}
+                	
                     if (!levels[new_level].density.containsKey(idx)) {
                         levels[new_level].density.put(idx, 1);
                     } else {
@@ -570,8 +579,10 @@ public class MaxInst {
                 u_level[u_idx] = new_level;
 
                 for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                	if(mrInst.dualTree.tIdx.isDeleted[idx])
-                		continue;
+                	if(mrInst.dualTree.tIdx.isDeleted[idx]) {
+                		System.out.println(idx + ":" + VectorUtil.inner_product(mrInst.dualTree.tIdx.data[idx], mrInst.dualTree.uIdx.samples[u_idx]) + "," + mrInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                		System.exit(0);
+                	}
                 	
                     if (!levels[new_level].density.containsKey(idx)) {
                         levels[new_level].density.put(idx, 1);
@@ -608,8 +619,10 @@ public class MaxInst {
                 u_level[u_idx] = new_level;
 
                 for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                	if(mrInst.dualTree.tIdx.isDeleted[idx])
-                		continue;
+                	if(mrInst.dualTree.tIdx.isDeleted[idx]) {
+                		System.out.println(idx + ":" + VectorUtil.inner_product(mrInst.dualTree.tIdx.data[idx], mrInst.dualTree.uIdx.samples[u_idx]) + "," + mrInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                		System.exit(0);
+                	}
                 	
                     levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -684,8 +697,10 @@ public class MaxInst {
                             }
 
                             for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                            	if(mrInst.dualTree.tIdx.isDeleted[idx])
-                            		continue;
+                            	if(mrInst.dualTree.tIdx.isDeleted[idx]) {
+                            		System.out.println(idx + ":" + VectorUtil.inner_product(mrInst.dualTree.tIdx.data[idx], mrInst.dualTree.uIdx.samples[u_idx]) + "," + mrInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                            		System.exit(0);
+                            	}
                             	
                                 levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
@@ -719,8 +734,10 @@ public class MaxInst {
                                 continue;
 
                             for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results) {
-                            	if(mrInst.dualTree.tIdx.isDeleted[idx])
-                            		continue;
+                            	if(mrInst.dualTree.tIdx.isDeleted[idx]) {
+                            		System.out.println(idx + ":" + VectorUtil.inner_product(mrInst.dualTree.tIdx.data[idx], mrInst.dualTree.uIdx.samples[u_idx]) + "," + mrInst.dualTree.uIdx.topKResults[u_idx].k_score);
+                            		System.exit(0);
+                            	}
                             	
                                 levels[old_level].density.replace(idx, levels[old_level].density.get(idx) - 1);
 
