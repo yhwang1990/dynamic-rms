@@ -1,6 +1,7 @@
 package main;
 
 import structures.MinSizeRMS;
+
 import utils.TupleOpr;
 import utils.VectorUtil;
 
@@ -9,7 +10,7 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class MS_k5_Main {
+public class MS_k5 {
 
 	public static void main(String[] args) {
 		try {
@@ -20,7 +21,6 @@ public class MS_k5_Main {
 	}
 
 	private static void runMinSizeRMS(String dataPath, String tuplePath, String timePath) throws IOException {
-
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
@@ -53,16 +53,15 @@ public class MS_k5_Main {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
+		double[] epsVals = { 0.0256, 0.0016 };
 		for (int k = 2; k <= 5; k++) {
 			int m = dim + (1 << 10) - 1;
-			double[] epsVals = {0.0128, 0.0016};
-			
 			for (double eps : epsVals) {
 				int size = -1;
 				while (m <= max_m) {
 					System.out.println(eps + " " + m);
 					MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
-					
+
 					int cur = inst.result().size();
 					if (cur <= size) {
 						inst = null;
@@ -72,7 +71,7 @@ public class MS_k5_Main {
 					} else {
 						size = cur;
 					}
-					
+
 					writeHeader(wr_result, dataPath, k, eps, m);
 					writeHeader(wr_time, dataPath, k, eps, m);
 					wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
@@ -99,92 +98,77 @@ public class MS_k5_Main {
 					inst = null;
 					System.gc();
 					m = (m - dim + 1) * 2 + (dim - 1);
-				} 
+				}
 			}
 		}
 		wr_result.close();
 		wr_time.close();
 	}
 
-	private static double[][] readDataFile(String filePath) {
-		try {
-			Path path = Paths.get(filePath);
-			int size = (int) Files.lines(path).count() - 1;
+	private static double[][] readDataFile(String filePath) throws IOException {
+		Path path = Paths.get(filePath);
+		int size = (int) Files.lines(path).count() - 1;
 
-			BufferedReader br = new BufferedReader(new FileReader(filePath));
+		BufferedReader br = new BufferedReader(new FileReader(filePath));
 
-			int dim = Integer.parseInt(br.readLine());
-			double[][] data = new double[size][dim + 1];
+		int dim = Integer.parseInt(br.readLine());
+		double[][] data = new double[size][dim + 1];
 
-			String line;
-			int idx = 0;
-			while ((line = br.readLine()) != null) {
-				String[] tokens = line.split(" ");
-				for (int d = 0; d < dim; d++)
-					data[idx][d] = Double.parseDouble(tokens[d].trim());
-				idx++;
-			}
-			br.close();
-
-			for (double[] tuple : data)
-				tuple[dim] = Math.sqrt(dim - VectorUtil.norm2(tuple));
-
-			return data;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
+		String line;
+		int idx = 0;
+		while ((line = br.readLine()) != null) {
+			String[] tokens = line.split(" ");
+			for (int d = 0; d < dim; d++)
+				data[idx][d] = Double.parseDouble(tokens[d].trim());
+			idx++;
 		}
+		br.close();
+
+		for (double[] tuple : data)
+			tuple[dim] = Math.sqrt(dim - VectorUtil.norm2(tuple));
+
+		return data;
 	}
 
-	private static double[][] readUtilFile(int dim, int sample_size) {
-		try {
-			String filePath = "./utility/utils_" + dim + "d.txt";
-			BufferedReader br = new BufferedReader(new FileReader(filePath));
+	private static double[][] readUtilFile(int dim, int sample_size) throws IOException {
+		String filePath = "./utility/utils_" + dim + "d.txt";
+		BufferedReader br = new BufferedReader(new FileReader(filePath));
 
-			double[][] data = new double[sample_size][dim + 1];
+		double[][] samples = new double[sample_size][dim + 1];
 
-			String line;
-			int idx = 0;
-			while ((line = br.readLine()) != null) {
-				String[] tokens = line.split(" ");
-				for (int d = 0; d < dim; d++)
-					data[idx][d] = Double.parseDouble(tokens[d].trim());
-				idx++;
-				if (idx == sample_size)
-					break;
-			}
-			br.close();
-
-			for (double[] util : data)
-				util[dim] = 0.0;
-
-			return data;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
+		String line;
+		int idx = 0;
+		while ((line = br.readLine()) != null) {
+			String[] tokens = line.split(" ");
+			for (int d = 0; d < dim; d++)
+				samples[idx][d] = Double.parseDouble(tokens[d].trim());
+			idx++;
+			if (idx == sample_size)
+				break;
 		}
+		br.close();
+
+		for (double[] util : samples)
+			util[dim] = 0.0;
+
+		return samples;
 	}
 
-	private static int[] readWorkload(String filePath) {
-		try {
-			String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_wl.txt";
-			Path path = Paths.get(wlPath);
-			int size = (int) Files.lines(path).count();
+	private static int[] readWorkload(String filePath) throws IOException {
+		String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_wl.txt";
+		Path path = Paths.get(wlPath);
+		int size = (int) Files.lines(path).count();
 
-			BufferedReader br = new BufferedReader(new FileReader(wlPath));
-			int[] workLoad = new int[size];
+		BufferedReader br = new BufferedReader(new FileReader(wlPath));
+		int[] workLoad = new int[size];
 
-			String line;
-			int idx = 0;
-			while ((line = br.readLine()) != null)
-				workLoad[idx++] = Integer.parseInt(line.trim());
-			br.close();
+		String line;
+		int idx = 0;
+		while ((line = br.readLine()) != null)
+			workLoad[idx++] = Integer.parseInt(line.trim());
+		br.close();
 
-			return workLoad;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
+		return workLoad;
 	}
 
 	private static void writeResult(BufferedWriter wr, int idx, MinSizeRMS inst, double[][] data) throws IOException {
@@ -199,7 +183,7 @@ public class MS_k5_Main {
 
 	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int sample_size)
 			throws IOException {
-		wr.write("header " + filePath + " ");
+		wr.write("dataset " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("eps=" + eps + " ");
 		wr.write("m=" + sample_size + "\n");
