@@ -35,7 +35,7 @@ public class TopKResult {
                 if (deleted_item.score > (1 - eps) * k_score + 1e-9)
                     approximate_result.offer(deleted_item);
 
-                while(approximate_result.peek().score < (1 - eps) * k_score + 1e-9)
+                while(!approximate_result.isEmpty() && approximate_result.peek().score < (1 - eps) * k_score + 1e-9)
                     approximate_result.poll();
             }
         } else if (score > (1 - eps) * k_score + 1e-9) {

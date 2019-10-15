@@ -54,12 +54,16 @@ public class MS_k1 {
 			workLoad.add(new TupleOpr(idx, -1));
 
 		int k = 1;
-		int m = dim + (1 << 10) - 1;
-		double[] epsVals = { 0.0256, 0.0016 };
+		double[] epsVals = { 0.05, 0.02, 0.0001 };
 		for (double eps : epsVals) {
 			int size = -1;
-			while (m <= max_m) {
-				System.out.println(eps + " " + m);
+			int m = dim + (1 << 10) - 1;
+			
+			int max_size = dim + (1 << 20) - 1;
+			if (eps > 0.01)
+				max_size = dim + (1 << 16) - 1;
+			
+			while (m <= max_size) {
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
 
 				int cur = inst.result().size();
@@ -71,6 +75,8 @@ public class MS_k1 {
 				} else {
 					size = cur;
 				}
+				
+				System.out.println(eps + " " + m);
 
 				writeHeader(wr_result, dataPath, k, eps, m);
 				writeHeader(wr_time, dataPath, k, eps, m);

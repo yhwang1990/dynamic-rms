@@ -1,6 +1,5 @@
 package main;
 
-import structures.MinErrorRMS;
 import structures.MinSizeRMS;
 
 import utils.TupleOpr;
@@ -11,41 +10,43 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class TestDimME {
+public class MS_d {
 
 	public static void main(String[] args) {
 		try {
-			runMinErrorRMS(args[0], args[1], args[2]);
+			runMinSizeRMS(args[0], args[1], args[2]);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void runMinErrorRMS(String dataPath, String tuplePath, String timePath) throws IOException {
+	private static void runMinSizeRMS(String dataPath, String tuplePath, String timePath) throws IOException {
+
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
-		int k = 1, r = 50;
+		int k = 1;
+		double eps = 0.0001;
 		double[][] data = readDataFile(dataPath);
 		if (data == null) {
-			System.err.println("error in reading data file");
+			System.err.println("error in reading dataset");
 			System.exit(0);
 		}
 
 		int[] toBeDeleted = readWorkload(dataPath);
 		if (toBeDeleted == null) {
-			System.err.println("error in reading workload file");
+			System.err.println("error in reading workload");
 			System.exit(0);
 		}
 
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
-
 		int max_m = dim + (1 << 20) - 1;
+
 		double[][] samples = readUtilFile(dim, max_m);
 		if (samples == null) {
-			System.err.println("error in reading sample file");
+			System.err.println("error in reading samples");
 			System.exit(0);
 		}
 
@@ -55,72 +56,39 @@ public class TestDimME {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		int m = calculateSampleSize(dim, k, r, data_size, init_size, dim + (1 << 10) - 1, max_m, data, samples);
-		double eps = 0.0001;
-		if (m == dim + (1 << 10) - 1)
-			eps = calculateEpsValue(dim, k, r, data_size, init_size, m, data, samples);
-		System.out.println(r + " " + m + " " + eps);
+		int m = max_m;
+		while (m >= dim + (1 << 10) - 1) {
+			System.out.println(eps + " " + m);
+			MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
+			writeHeader(wr_result, dataPath, k, eps, m);
+			writeHeader(wr_time, dataPath, k, eps, m);
+			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
+					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+			int interval = workLoad.size() / 10;
+			int output_id = 0;
+			for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+				inst.update(workLoad.get(opr_id));
+				if (opr_id % interval == interval - 1) {
+					wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
+					wr_time.write(Math.round(inst.addTreeTime) + " ");
+					wr_time.write(Math.round(inst.addCovTime) + " ");
+					wr_time.write(Math.round(inst.delTreeTime) + " ");
+					wr_time.write(Math.round(inst.delCovTime) + "\n");
 
-		MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
+					writeResult(wr_result, output_id, inst, data);
 
-		writeHeader(wr_result, dataPath, k, r, eps, m);
-		writeHeader(wr_time, dataPath, k, r, eps, m);
-		wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
-				+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-		int interval = workLoad.size() / 10;
-		int output_id = 0;
-		for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-			inst.update(workLoad.get(opr_id));
-			if (opr_id % interval == interval - 1) {
-				wr_time.write("idx=" + output_id + " ");
-				wr_time.write(Math.round(inst.addTreeTime) + " ");
-				wr_time.write(Math.round(inst.addCovTime) + " ");
-				wr_time.write(Math.round(inst.delTreeTime) + " ");
-				wr_time.write(Math.round(inst.delCovTime) + "\n");
-
-				writeResult(wr_result, output_id, inst, data);
-				output_id += 1;
-				wr_result.flush();
-				wr_time.flush();
+					output_id += 1;
+					wr_result.flush();
+					wr_time.flush();
+				}
 			}
+			inst = null;
+			System.gc();
+			
+			m = (m - dim + 1) / 2 + (dim - 1);
 		}
-		inst = null;
-		System.gc();
-		
 		wr_result.close();
 		wr_time.close();
-	}
-
-	private static double calculateEpsValue(int dim, int k, int r, int data_size, int init_size, int sample_size,
-			double[][] data, double[][] samples) {
-		double eps = 0.0001, max_eps = 0.5;
-		while (eps < max_eps) {
-			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, sample_size, data, samples);
-			int mr = test_inst.maxInst.mr;
-			test_inst = null;
-
-			if (mr <= sample_size / 2) {
-				eps *= 2;
-			} else
-				return eps;
-		}
-		return max_eps;
-	}
-
-	private static int calculateSampleSize(int dim, int k, int r, int data_size, int init_size, int m,
-			int max_m, double[][] data, double[][] samples) {
-		while (m < max_m) {
-			MinSizeRMS test_inst = new MinSizeRMS(dim, k, 0.001, data_size, init_size, m, data, samples);
-			int test_size = test_inst.result().size();
-			test_inst = null;
-
-			if (test_size >= r + 5)
-				return m;
-			else
-				m = (m - dim + 1) * 2 + (dim - 1);
-		}
-		return max_m;
 	}
 
 	private static double[][] readDataFile(String filePath) {
@@ -204,7 +172,7 @@ public class TestDimME {
 		}
 	}
 
-	private static void writeResult(BufferedWriter wr, int idx, MinErrorRMS inst, double[][] data) throws IOException {
+	private static void writeResult(BufferedWriter wr, int idx, MinSizeRMS inst, double[][] data) throws IOException {
 		DecimalFormat df = new DecimalFormat("0.000000");
 		wr.write("index " + idx + " " + inst.result().size() + "\n");
 		for (int t_idx : inst.result()) {
@@ -214,11 +182,10 @@ public class TestDimME {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int m)
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int m)
 			throws IOException {
 		wr.write("header " + filePath + " ");
 		wr.write("k=" + k + " ");
-		wr.write("r=" + r + " ");
 		wr.write("eps=" + eps + " ");
 		wr.write("m=" + m + "\n");
 	}
