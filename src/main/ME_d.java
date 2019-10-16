@@ -55,8 +55,10 @@ public class ME_d {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		int init_m = dim + (1 << 10) - 1;
-		double init_eps = 0.1024;
+		int init_m = dim + (1 << 14) - 1;
+		double init_eps = 0.0256;
+		if (dataPath.contains("AntiCorr"))
+			init_eps = 0.0512;
 		
 		Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, init_m, data, samples);
 		
@@ -195,7 +197,7 @@ public class ME_d {
 	
 	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int old_m,
 			double[][] data, double[][] samples) {
-		int max_m = Math.min((old_m - dim + 1) * 4 + (dim - 1), dim + (1 << 20) - 1);
+		int max_m = Math.min((old_m - dim + 1) * 16 + (dim - 1), dim + (1 << 20) - 1);
 		int m = old_m;
 		double eps = old_eps;
 		while (eps > 1e-4 - 1e-9) {

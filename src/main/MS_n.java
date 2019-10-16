@@ -26,7 +26,7 @@ public class MS_n {
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
 		int k = 1;
-		double eps = 0.0001;
+		
 		for (int data_size = 100_000; data_size <= 1_000_000; data_size += 100_000) {
 			double[][] data = readDataFile(dataPath, data_size);
 			if (data == null) {
@@ -56,36 +56,57 @@ public class MS_n {
 			for (int idx : toBeDeleted)
 				workLoad.add(new TupleOpr(idx, -1));
 
-			int m = max_m;
-			while (m >= dim + (1 << 10) - 1) {
-				System.out.println(eps + " " + m);
-				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
-				writeHeader(wr_result, dataPath, k, eps, m, data_size);
-				writeHeader(wr_time, dataPath, k, eps, m, data_size);
-				wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
-						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-				int interval = workLoad.size() / 10;
-				int output_id = 0;
-				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-					inst.update(workLoad.get(opr_id));
-					if (opr_id % interval == interval - 1) {
-						wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
-						wr_time.write(Math.round(inst.addTreeTime) + " ");
-						wr_time.write(Math.round(inst.addCovTime) + " ");
-						wr_time.write(Math.round(inst.delTreeTime) + " ");
-						wr_time.write(Math.round(inst.delCovTime) + "\n");
-
-						writeResult(wr_result, output_id, inst, data);
-
-						output_id += 1;
-						wr_result.flush();
-						wr_time.flush();
-					}
-				}
-				inst = null;
-				System.gc();
+			double[] epsVals = { 0.05, 0.02, 0.0001 };
+			for (double eps : epsVals) {
+				int size = -1;
+				int m = dim + (1 << 10) - 1;
 				
-				m = (m - dim + 1) / 2 + (dim - 1);
+				int max_size = dim + (1 << 20) - 1;
+				if (eps > 0.01)
+					max_size = dim + (1 << 16) - 1;
+				
+				while (m <= max_size) {
+					MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
+					
+					int cur = inst.result().size();
+					if (cur <= size) {
+						inst = null;
+						System.gc();
+						m = (m - dim + 1) * 2 + (dim - 1);
+						continue;
+					} else {
+						size = cur;
+					}
+					
+					System.out.println(eps + " " + m);
+					
+					writeHeader(wr_result, dataPath, k, eps, m, data_size);
+					writeHeader(wr_time, dataPath, k, eps, m, data_size);
+					wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
+							+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+					int interval = workLoad.size() / 10;
+					int output_id = 0;
+					for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+						inst.update(workLoad.get(opr_id));
+						if (opr_id % interval == interval - 1) {
+							wr_time.write("idx=" + output_id + " size=" + inst.result().size() + " ");
+							wr_time.write(Math.round(inst.addTreeTime) + " ");
+							wr_time.write(Math.round(inst.addCovTime) + " ");
+							wr_time.write(Math.round(inst.delTreeTime) + " ");
+							wr_time.write(Math.round(inst.delCovTime) + "\n");
+
+							writeResult(wr_result, output_id, inst, data);
+
+							output_id += 1;
+							wr_result.flush();
+							wr_time.flush();
+						}
+					}
+					inst = null;
+					System.gc();
+
+					m = (m - dim + 1) * 2 + (dim - 1);
+				} 
 			}
 		}
 		wr_result.close();
@@ -184,7 +205,7 @@ public class MS_n {
 
 	private static void writeHeader(BufferedWriter wr, String filePath, int k, double eps, int m, int n)
 			throws IOException {
-		wr.write("header " + filePath + " ");
+		wr.write("dataset " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("eps=" + eps + " ");
 		wr.write("m=" + m + " ");
