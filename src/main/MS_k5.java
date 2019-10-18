@@ -62,6 +62,7 @@ public class MS_k5 {
 				int max_size = dim + (1 << 20) - 1;
 				if (eps > 0.01)
 					max_size = dim + (1 << 16) - 1;
+				
 				while (m <= max_size) {
 					MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
 

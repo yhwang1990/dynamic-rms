@@ -7,7 +7,7 @@ import utils.VectorUtil;
 
 import java.io.*;
 import java.nio.file.*;
-import java.text.DecimalFormat;
+import java.text.*;
 import java.util.*;
 
 public class ME_k5 {
@@ -115,7 +115,7 @@ public class ME_k5 {
 
 	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int old_m,
 			double[][] data, double[][] samples) {
-		int max_m = Math.min((old_m - dim + 1) * 4 + (dim - 1), dim + (1 << 20) - 1);
+		int max_m = Math.min((old_m - dim + 1) * 16 + (dim - 1), dim + (1 << 20) - 1);
 		int m = old_m;
 		double eps = old_eps;
 		while (eps > 1e-4 - 1e-9) {
