@@ -43,8 +43,8 @@ public class RunMS {
 
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
-		
-		int m = dim + 1 << Integer.parseInt(args[4]) - 1;
+
+		int m = dim + 1 << Integer.parseInt(args[4]) + 1;
 
 		double[][] samples = readUtilFile(dim, m);
 		if (samples == null) {
@@ -62,8 +62,8 @@ public class RunMS {
 		MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
 		writeHeader(wr_result, args[0], k, eps, m);
 		writeHeader(wr_time, args[0], k, eps, m);
-		wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
-				+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+		wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts=" + (workLoad.size() - toBeDeleted.length)
+				+ " deletes=" + toBeDeleted.length + "\n");
 		int interval = workLoad.size() / 10;
 		int output_id = 0;
 		for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
@@ -87,85 +87,70 @@ public class RunMS {
 		wr_time.close();
 	}
 
-	private static double[][] readDataFile(String filePath) {
-		try {
-			Path path = Paths.get(filePath);
-			int size = (int) Files.lines(path).count() - 1;
+	private static double[][] readDataFile(String filePath) throws IOException {
+		Path path = Paths.get(filePath);
+		int size = (int) Files.lines(path).count() - 1;
 
-			BufferedReader br = new BufferedReader(new FileReader(filePath));
+		BufferedReader br = new BufferedReader(new FileReader(filePath));
 
-			int dim = Integer.parseInt(br.readLine());
-			double[][] data = new double[size][dim + 1];
+		int dim = Integer.parseInt(br.readLine());
+		double[][] data = new double[size][dim + 1];
 
-			String line;
-			int idx = 0;
-			while ((line = br.readLine()) != null) {
-				String[] tokens = line.split(" ");
-				for (int d = 0; d < dim; d++)
-					data[idx][d] = Double.parseDouble(tokens[d].trim());
-				idx++;
-			}
-			br.close();
-
-			for (double[] tuple : data)
-				tuple[dim] = Math.sqrt(dim - VectorUtil.norm2(tuple));
-
-			return data;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
+		String line;
+		int idx = 0;
+		while ((line = br.readLine()) != null) {
+			String[] tokens = line.split(" ");
+			for (int d = 0; d < dim; d++)
+				data[idx][d] = Double.parseDouble(tokens[d].trim());
+			idx++;
 		}
+		br.close();
+
+		for (double[] tuple : data)
+			tuple[dim] = Math.sqrt(dim - VectorUtil.norm2(tuple));
+
+		return data;
 	}
 
-	private static double[][] readUtilFile(int dim, int sample_size) {
-		try {
-			String filePath = "./utility/utils_" + dim + "d.txt";
-			BufferedReader br = new BufferedReader(new FileReader(filePath));
+	private static double[][] readUtilFile(int dim, int sample_size) throws IOException {
+		String filePath = "./utility/utils_" + dim + "d.txt";
+		BufferedReader br = new BufferedReader(new FileReader(filePath));
 
-			double[][] data = new double[sample_size][dim + 1];
+		double[][] data = new double[sample_size][dim + 1];
 
-			String line;
-			int idx = 0;
-			while ((line = br.readLine()) != null) {
-				String[] tokens = line.split(" ");
-				for (int d = 0; d < dim; d++)
-					data[idx][d] = Double.parseDouble(tokens[d].trim());
-				idx++;
-				if (idx == sample_size)
-					break;
-			}
-			br.close();
-
-			for (double[] util : data)
-				util[dim] = 0.0;
-
-			return data;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
+		String line;
+		int idx = 0;
+		while ((line = br.readLine()) != null) {
+			String[] tokens = line.split(" ");
+			for (int d = 0; d < dim; d++)
+				data[idx][d] = Double.parseDouble(tokens[d].trim());
+			idx++;
+			if (idx == sample_size)
+				break;
 		}
+		br.close();
+
+		for (double[] util : data)
+			util[dim] = 0.0;
+
+		return data;
 	}
 
-	private static int[] readWorkload(String filePath) {
-		try {
-			String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_wl.txt";
-			Path path = Paths.get(wlPath);
-			int size = (int) Files.lines(path).count();
+	private static int[] readWorkload(String filePath) throws IOException {
+		String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_wl.txt";
+		Path path = Paths.get(wlPath);
+		int size = (int) Files.lines(path).count();
 
-			BufferedReader br = new BufferedReader(new FileReader(wlPath));
-			int[] workLoad = new int[size];
+		BufferedReader br = new BufferedReader(new FileReader(wlPath));
+		int[] workLoad = new int[size];
 
-			String line;
-			int idx = 0;
-			while ((line = br.readLine()) != null)
-				workLoad[idx++] = Integer.parseInt(line.trim());
-			br.close();
+		String line;
+		int idx = 0;
+		while ((line = br.readLine()) != null)
+			workLoad[idx++] = Integer.parseInt(line.trim());
+		br.close();
 
-			return workLoad;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
+		return workLoad;
 	}
 
 	private static void writeResult(BufferedWriter wr, int idx, MinSizeRMS inst, double[][] data) throws IOException {

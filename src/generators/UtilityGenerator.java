@@ -4,7 +4,7 @@ import java.util.*;
 
 public class UtilityGenerator {
     public static double[][] gaussianGenerator(int dim, int size) {
-    	Random RAND = new Random(65537);
+    	Random RAND = new Random(17);
         double[][] samples = new double[size][dim];
         for (int i = 0; i < size; i++) {
         	double len = 0;

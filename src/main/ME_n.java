@@ -24,7 +24,7 @@ public class ME_n {
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
-		int k = 1, r = 25;
+		int k = 1, r = 50;
 		for (int data_size = 100_000; data_size <= 1_000_000; data_size += 100_000) {
 			double[][] data = readDataFile(dataPath, data_size);
 			if (data == null) {
@@ -41,8 +41,8 @@ public class ME_n {
 			int dim = data[0].length - 1;
 			int init_size = data_size - toBeDeleted.length;
 
-			int max_m = dim + (1 << 20) - 1;
-			double[][] samples = readUtilFile(dim, max_m);
+			int max_pow = 20;
+			double[][] samples = readUtilFile(dim, calcM(max_pow, dim));
 			if (samples == null) {
 				System.err.println("error in reading sample file");
 				System.exit(0);
@@ -54,19 +54,19 @@ public class ME_n {
 			for (int idx : toBeDeleted)
 				workLoad.add(new TupleOpr(idx, -1));
 
-			int init_m = dim + (1 << 14) - 1;
+			int init_pow = 14;
 			double init_eps = 0.0256;
 			if (dataPath.contains("AntiCorr"))
 				init_eps = 0.0512;
 			
-			Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, init_m, data, samples);
+			Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, init_pow, data, samples);
 			
-			System.out.println(r + " " + pair.m + " " + pair.eps);
+			System.out.println(r + " " + pair.pow + " " + pair.eps);
 
-			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, pair.m, data, samples);
+			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data, samples);
 
-			writeHeader(wr_result, dataPath, k, r, pair.eps, pair.m, data_size);
-			writeHeader(wr_time, dataPath, k, r, pair.eps, pair.m, data_size);
+			writeHeader(wr_result, dataPath, k, r, pair.eps, calcM(pair.pow, dim), data_size);
+			writeHeader(wr_time, dataPath, k, r, pair.eps, calcM(pair.pow, dim), data_size);
 			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
 					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
@@ -193,41 +193,46 @@ public class ME_n {
 		wr.write("n=" + n + "\n");
 	}
 	
-	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int old_m,
+	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int old_pow,
 			double[][] data, double[][] samples) {
-		int max_m = Math.min((old_m - dim + 1) * 16 + (dim - 1), dim + (1 << 20) - 1);
-		int m = old_m;
+		int max_pow = Math.min(old_pow + 4, 20);
+		int pow = old_pow;
 		double eps = old_eps;
 		while (eps > 1e-4 - 1e-9) {
-			while (m <= max_m) {
-				MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
+			while (pow <= max_pow) {
+				int test_m = calcM(pow, dim);
+				MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, test_m, data, samples);
 				int mr = test_inst.maxInst.mr;
 				test_inst = null;
 
-				if (mr >= m / 10 && mr <= m / 2)
-					return new Pair(m, eps);
-				else if (mr > m / 2)
-					m = (m - dim + 1) * 2 + (dim - 1);
-				else if (mr < m / 10) {
-					if (m == dim + (1 << 10) - 1)
-						return new Pair(m, eps);
+				if (mr >= test_m / 10 && mr <= test_m / 2)
+					return new Pair(pow, eps);
+				else if (mr > test_m / 2)
+					pow += 1;
+				else if (mr < test_m / 10) {
+					if (pow <= 10)
+						return new Pair(pow, eps);
 					else
-						m = (m - dim + 1) / 2 + (dim - 1);
+						pow -= 1;
 				}
 			}
-			m = old_m;
+			pow = old_pow;
 			eps /= 2;
 		}
-		return new Pair(dim + (1 << 20) - 1, 0.0001);
+		return new Pair(20, 0.0001);
 	}
 	
 	private static class Pair {
-		int m;
+		int pow;
 		double eps;
 
-		public Pair(int m, double eps) {
-			this.m = m;
+		public Pair(int pow, double eps) {
+			this.pow = pow;
 			this.eps = eps;
 		}
+	}
+	
+	private static int calcM(int pow, int dim) {
+		return (1 << pow) + dim + 1;
 	}
 }

@@ -40,8 +40,7 @@ public class MS_k1 {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_m = dim + (1 << 20) - 1;
-		double[][] samples = readUtilFile(dim, max_m);
+		double[][] samples = readUtilFile(dim, calcM(20, dim));
 		if (samples == null) {
 			System.err.println("error in reading samples");
 			System.exit(0);
@@ -54,32 +53,33 @@ public class MS_k1 {
 			workLoad.add(new TupleOpr(idx, -1));
 
 		int k = 1;
-		double[] epsVals = { 0.05, 0.02, 0.0001 };
+		double[] epsVals = { 0.1, 0.01, 0.001 };
 		for (double eps : epsVals) {
 			int size = -1;
-			int m = dim + (1 << 10) - 1;
+			int pow = 6;
 			
-			int max_size = dim + (1 << 20) - 1;
-			if (eps > 0.01)
-				max_size = dim + (1 << 16) - 1;
+			int max_pow = 20;
+			if (eps > 0.005)
+				max_pow = 17;
+			if (eps > 0.05)
+				max_pow = 14;
 			
-			while (m <= max_size) {
-				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, m, data, samples);
+			while (pow <= max_pow) {
+				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, calcM(pow, dim), data, samples);
 
 				int cur = inst.result().size();
 				if (cur <= size) {
 					inst = null;
-					System.gc();
-					m = (m - dim + 1) * 2 + (dim - 1);
+					pow += 1;
 					continue;
 				} else {
 					size = cur;
 				}
 				
-				System.out.println(eps + " " + m);
+				System.out.println(eps + " " + pow);
 
-				writeHeader(wr_result, dataPath, k, eps, m);
-				writeHeader(wr_time, dataPath, k, eps, m);
+				writeHeader(wr_result, dataPath, k, eps, calcM(pow, dim));
+				writeHeader(wr_time, dataPath, k, eps, calcM(pow, dim));
 				wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
 						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 
@@ -103,7 +103,7 @@ public class MS_k1 {
 				}
 				inst = null;
 				System.gc();
-				m = (m - dim + 1) * 2 + (dim - 1);
+				pow += 1;
 			}
 		}
 		wr_result.close();
@@ -192,5 +192,9 @@ public class MS_k1 {
 		wr.write("k=" + k + " ");
 		wr.write("eps=" + eps + " ");
 		wr.write("m=" + sample_size + "\n");
+	}
+	
+	private static int calcM(int pow, int dim) {
+		return (1 << pow) + dim + 1;
 	}
 }
