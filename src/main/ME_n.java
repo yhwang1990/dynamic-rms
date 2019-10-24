@@ -55,9 +55,9 @@ public class ME_n {
 				workLoad.add(new TupleOpr(idx, -1));
 
 			int init_pow = 14;
-			double init_eps = 0.0256;
+			double init_eps = 0.0128;
 			if (dataPath.contains("AntiCorr"))
-				init_eps = 0.0512;
+				init_eps = 0.0256;
 			
 			Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, init_pow, data, samples);
 			

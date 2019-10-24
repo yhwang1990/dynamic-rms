@@ -53,16 +53,14 @@ public class MS_k1 {
 			workLoad.add(new TupleOpr(idx, -1));
 
 		int k = 1;
-		double[] epsVals = { 0.1, 0.01, 0.001 };
+		double[] epsVals = { 0.0512, 0.0064, 0.0016 };
 		for (double eps : epsVals) {
 			int size = -1;
 			int pow = 6;
 			
-			int max_pow = 20;
+			int max_pow = 18;
 			if (eps > 0.005)
-				max_pow = 17;
-			if (eps > 0.05)
-				max_pow = 14;
+				max_pow = 16;
 			
 			while (pow <= max_pow) {
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, calcM(pow, dim), data, samples);
