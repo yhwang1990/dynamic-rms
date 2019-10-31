@@ -9,7 +9,7 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class ME_n {
+public class ME_n_AC {
 
 	public static void main(String[] args) {
 		try {
@@ -18,7 +18,7 @@ public class ME_n {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static void runMinErrorRMS(String dataPath, String tuplePath, String timePath) throws IOException {
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
@@ -41,8 +41,8 @@ public class ME_n {
 			int dim = data[0].length - 1;
 			int init_size = data_size - toBeDeleted.length;
 
-			int max_pow = 20;
-			double[][] samples = readUtilFile(dim, calcM(max_pow, dim));
+			int fix_pow = 16;
+			double[][] samples = readUtilFile(dim, calcM(fix_pow, dim));
 			if (samples == null) {
 				System.err.println("error in reading sample file");
 				System.exit(0);
@@ -54,16 +54,13 @@ public class ME_n {
 			for (int idx : toBeDeleted)
 				workLoad.add(new TupleOpr(idx, -1));
 
-			int init_pow = 14;
-			double init_eps = 0.0128;
-			if (dataPath.contains("AntiCorr"))
-				init_eps = 0.0512;
-			
-			Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, init_pow, data, samples);
-			
+			double init_eps = 0.05;
+			Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, fix_pow, data, samples);
+
 			System.out.println(r + " " + pair.pow + " " + pair.eps);
 
-			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data, samples);
+			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data,
+					samples);
 
 			writeHeader(wr_result, dataPath, k, r, pair.eps, calcM(pair.pow, dim), data_size);
 			writeHeader(wr_time, dataPath, k, r, pair.eps, calcM(pair.pow, dim), data_size);
@@ -173,7 +170,7 @@ public class ME_n {
 			return null;
 		}
 	}
-	
+
 	private static void writeResult(BufferedWriter wr, int idx, MinErrorRMS inst, double[][] data) throws IOException {
 		DecimalFormat df = new DecimalFormat("0.000000");
 		wr.write("index " + idx + " " + inst.result().size() + "\n");
@@ -184,7 +181,8 @@ public class ME_n {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int m, int n) throws IOException {
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int m, int n)
+			throws IOException {
 		wr.write("dataset " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("r=" + r + " ");
@@ -192,36 +190,25 @@ public class ME_n {
 		wr.write("m=" + m + " ");
 		wr.write("n=" + n + "\n");
 	}
-	
-	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int old_pow,
-			double[][] data, double[][] samples) {
-		int max_pow = Math.min(old_pow + 8, 20);
-		int pow = old_pow;
-		double eps = old_eps;
-		while (eps > 1e-4 - 1e-9) {
-			while (pow <= max_pow) {
-				int test_m = calcM(pow, dim);
-				MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, test_m, data, samples);
-				int mr = test_inst.maxInst.mr;
-				test_inst = null;
 
-				if (mr >= test_m / 10 && mr <= test_m / 2)
-					return new Pair(pow, eps);
-				else if (mr > test_m / 2)
-					pow += 1;
-				else if (mr < test_m / 10) {
-					if (pow <= 10)
-						return new Pair(pow, eps);
-					else
-						pow -= 1;
-				}
+	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int fix_pow,
+			double[][] data, double[][] samples) {
+		double eps = old_eps;
+		while (eps > 0.01) {
+			int fix_m = calcM(fix_pow, dim);
+			MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, fix_m, data, samples);
+			int mr = test_inst.maxInst.mr;
+			test_inst = null;
+
+			if (mr < fix_m / 1.1)
+				return new Pair(fix_pow, eps);
+			else {
+				eps -= 0.01;
 			}
-			pow = old_pow;
-			eps /= 2;
 		}
-		return new Pair(20, 0.0001);
+		return new Pair(fix_pow, 0.01);
 	}
-	
+
 	private static class Pair {
 		int pow;
 		double eps;
@@ -231,7 +218,7 @@ public class ME_n {
 			this.eps = eps;
 		}
 	}
-	
+
 	private static int calcM(int pow, int dim) {
 		return (1 << pow) + dim + 1;
 	}

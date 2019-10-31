@@ -54,15 +54,12 @@ public class MS_d {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		double[] epsVals = { 0.0064, 0.0016 };
+		double[] epsVals = { 0.0512, 0.0256 };
 		for (double eps : epsVals) {
 			int size = -1;
 			int pow = 6;
 
-			int max_pow = 18;
-			if (eps > 0.005)
-				max_pow = 16;
-
+			int max_pow = 16;
 			while (pow <= max_pow) {
 				MinSizeRMS inst = new MinSizeRMS(dim, k, eps, data_size, init_size, calcM(pow, dim), data, samples);
 

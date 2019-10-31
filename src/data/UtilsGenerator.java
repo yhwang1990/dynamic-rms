@@ -9,11 +9,11 @@ import java.util.ArrayList;
 public class UtilsGenerator {
 
     public static void main(String[] args) {
-        for (int d = 4; d <= 10; d++) {
-        	ArrayList<double[]> samples = UtilityGenerator.balancedGenerator(d, 1_100_000);
-            writeToFile(d, samples);
-        }
-    	ArrayList<double[]> samples = UtilityGenerator.balancedGenerator(12, 1_100_000);
+//        for (int d = 4; d <= 10; d++) {
+//        	ArrayList<double[]> samples = UtilityGenerator.balancedGenerator(d, 1_100_000);
+//            writeToFile(d, samples);
+//        }
+    	ArrayList<double[]> samples = UtilityGenerator.balancedGenerator(12, 4_400_000);
         writeToFile(12, samples);
     }
 

@@ -56,7 +56,7 @@ public class MS_k5 {
 		for (int k = 2; k <= 5; k++) {
 			for (double eps : epsVals) {
 				int size = -1;
-				int pow = 6;
+				int pow = 8;
 				
 				int max_pow = 18;
 				if (eps > 0.005)

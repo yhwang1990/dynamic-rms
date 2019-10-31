@@ -10,7 +10,7 @@ import java.nio.file.*;
 import java.text.*;
 import java.util.*;
 
-public class ME_k5 {
+public class ME_k5_AC {
 
 	public static void main(String[] args) {
 		try {
@@ -40,7 +40,7 @@ public class ME_k5 {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int max_pow = 20;
+		int max_pow = 18;
 		double min_eps = 0.0001;
 
 		double[][] samples = readUtilFile(dim, calcM(max_pow, dim));
@@ -55,59 +55,57 @@ public class ME_k5 {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		for (int k = 2; k <= 5; k++) {
+		for (int k = 1; k <= 5; k++) {
 			int cur_pow = 10;
-			double cur_eps = 0.1024;
+			double cur_eps = 0.0512;
 
-			for (int r = 5; r <= 100; r += 5) {
-				if (r < dim)
-					continue;
+			int r = 10;
 
-				Pair pair = new Pair(max_pow, min_eps);
+			Pair pair = new Pair(max_pow, min_eps);
 
-				if (cur_eps > min_eps || cur_pow < max_pow) {
-					pair = getParams(dim, k, r, data_size, init_size, cur_eps, cur_pow, data, samples);
-					cur_pow = pair.pow;
-					cur_eps = pair.eps;
-				}
+			if (cur_eps > min_eps || cur_pow < max_pow) {
+				pair = getParams(dim, k, r, data_size, init_size, cur_eps, cur_pow, data, samples);
+				cur_pow = pair.pow;
+				cur_eps = pair.eps;
+			}
 
-				System.out.println(r + " " + pair.pow + " " + pair.eps);
+			System.out.println(r + " " + pair.pow + " " + pair.eps);
 
-				MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data, samples);
+			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data,
+					samples);
 
-				if (inst.result().size() <= r - 5 && pair.pow == max_pow && pair.eps < 0.0002) {
-					inst = null;
-					System.gc();
-					break;
-				}
-
-				writeHeader(wr_result, dataPath, k, r, pair.eps, calcM(pair.pow, dim));
-				writeHeader(wr_time, dataPath, k, r, pair.eps, calcM(pair.pow, dim));
-
-				wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
-						+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-				int interval = workLoad.size() / 10;
-				int output_id = 0;
-				for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-					inst.update(workLoad.get(opr_id));
-					if (opr_id % interval == interval - 1) {
-						wr_time.write("idx=" + output_id + " ");
-						wr_time.write(Math.round(inst.addTreeTime) + " ");
-						wr_time.write(Math.round(inst.addCovTime) + " ");
-						wr_time.write(Math.round(inst.delTreeTime) + " ");
-						wr_time.write(Math.round(inst.delCovTime) + "\n");
-
-						writeResult(wr_result, output_id, inst, data);
-						output_id += 1;
-						wr_result.flush();
-						wr_time.flush();
-					}
-				}
-
+			if (inst.result().size() <= r - 5 && pair.pow == max_pow && pair.eps < 0.0002) {
 				inst = null;
 				System.gc();
+				break;
 			}
+
+			writeHeader(wr_result, dataPath, k, r, pair.eps, calcM(pair.pow, dim));
+			writeHeader(wr_time, dataPath, k, r, pair.eps, calcM(pair.pow, dim));
+
+			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
+					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+
+			int interval = workLoad.size() / 10;
+			int output_id = 0;
+			for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+				inst.update(workLoad.get(opr_id));
+				if (opr_id % interval == interval - 1) {
+					wr_time.write("idx=" + output_id + " ");
+					wr_time.write(Math.round(inst.addTreeTime) + " ");
+					wr_time.write(Math.round(inst.addCovTime) + " ");
+					wr_time.write(Math.round(inst.delTreeTime) + " ");
+					wr_time.write(Math.round(inst.delCovTime) + "\n");
+
+					writeResult(wr_result, output_id, inst, data);
+					output_id += 1;
+					wr_result.flush();
+					wr_time.flush();
+				}
+			}
+
+			inst = null;
+			System.gc();
 		}
 		wr_result.close();
 		wr_time.close();
@@ -115,7 +113,7 @@ public class ME_k5 {
 
 	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int old_pow,
 			double[][] data, double[][] samples) {
-		int max_pow = Math.min(old_pow + 3, 20);
+		int max_pow = Math.min(old_pow + 4, 20);
 		int pow = old_pow;
 		double eps = old_eps;
 		while (eps > 1e-4 - 1e-9) {
@@ -236,7 +234,7 @@ public class ME_k5 {
 			this.eps = eps;
 		}
 	}
-	
+
 	private static int calcM(int pow, int dim) {
 		return (1 << pow) + dim + 1;
 	}

@@ -44,7 +44,7 @@ public class RunMS {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int m = dim + 1 << Integer.parseInt(args[4]) + 1;
+		int m = dim + (1 << Integer.parseInt(args[4])) + 1;
 
 		double[][] samples = readUtilFile(dim, m);
 		if (samples == null) {
