@@ -39,7 +39,7 @@ public class MaxInst {
                 mr -= 1;
             } while (scr.sol.size() > r);
         } else {
-            while ((scr.sol.size() < r && mr < max_mr) || (scr.sol.size() == r && mr < max_mr && scr.canAdd(mr))) {
+            while (scr.sol.size() < r && mr < max_mr) {
                 scr.add(mr);
                 mr += 1;
             }
@@ -506,12 +506,12 @@ public class MaxInst {
             }
         }
 
-        private boolean canAdd(int u_idx) {
-            for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results)
-                if (sol.containsKey(idx))
-                    return true;
-            return false;
-        }
+//        private boolean canAdd(int u_idx) {
+//            for (int idx : mrInst.dualTree.uIdx.topKResults[u_idx].results)
+//                if (sol.containsKey(idx))
+//                    return true;
+//            return false;
+//        }
 
         private void add(int u_idx) {
             int new_level = -1;
