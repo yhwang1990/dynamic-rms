@@ -67,26 +67,26 @@ public class ME_k5_new {
 
 			int r = 50;
 
-			Param pair = new Param(max_pow, min_eps);
+			Param param = new Param(max_pow, min_eps);
 			if (cur_eps > min_eps || cur_pow < max_pow) {
-				pair = getParams(dim, k, r, data_size, init_size, cur_eps, cur_pow, data, samples);
-				cur_pow = pair.pow;
-				cur_eps = pair.eps;
+				param = getParams(dim, k, r, data_size, init_size, cur_eps, cur_pow, data, samples);
+				cur_pow = param.pow;
+				cur_eps = param.eps;
 			}
 
-			System.out.println(r + " " + pair.pow + " " + pair.eps);
+			System.out.println(r + " " + param.pow + " " + param.eps);
 
-			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data,
+			MinErrorRMS inst = new MinErrorRMS(dim, k, r, param.eps, data_size, init_size, calcM(param.pow, dim), data,
 					samples);
 
-			if (inst.result().size() <= r - 5 && pair.pow == max_pow && pair.eps < 0.0002) {
+			if (inst.result().size() <= r - 5 && param.pow == max_pow && param.eps < 0.0002) {
 				inst = null;
 				System.gc();
 				break;
 			}
 
-			writeHeader(wr_result, dataPath, k, r, pair.eps, calcM(pair.pow, dim));
-			writeHeader(wr_time, dataPath, k, r, pair.eps, calcM(pair.pow, dim));
+			writeHeader(wr_result, dataPath, k, r, param.eps, calcM(param.pow, dim));
+			writeHeader(wr_time, dataPath, k, r, param.eps, calcM(param.pow, dim));
 
 			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
 					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
