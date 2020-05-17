@@ -1,6 +1,6 @@
 package main;
 
-import structures.MinErrorRMS;
+import structures.RMSInst;
 
 import utils.TupleOpr;
 import utils.VectorUtil;
@@ -10,17 +10,17 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class RunME_One {
+public class RunRMS {
 
 	public static void main(String[] args) {
 		try {
-			runMinErrorRMS(args);
+			runRMS(args);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void runMinErrorRMS(String[] args) throws IOException {
+	private static void runRMS(String[] args) throws IOException {
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(args[1], true));
 		wr_time = new BufferedWriter(new FileWriter(args[2], true));
@@ -60,7 +60,7 @@ public class RunME_One {
 
 		System.out.println(r + " " + m + " " + eps);
 			
-		MinErrorRMS inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, m, data, samples);
+		RMSInst inst = new RMSInst(dim, k, r, eps, data_size, init_size, m, data, samples);
 
 		writeHeader(wr_result, args[0], k, r, eps, m);
 		writeHeader(wr_time, args[0], k, r, eps, m);
@@ -159,7 +159,7 @@ public class RunME_One {
 		return workLoad;
 	}
 
-	private static void writeResult(BufferedWriter wr, int idx, MinErrorRMS inst, double[][] data) throws IOException {
+	private static void writeResult(BufferedWriter wr, int idx, RMSInst inst, double[][] data) throws IOException {
 		DecimalFormat df = new DecimalFormat("0.000000");
 		wr.write("index " + idx + " " + inst.result().size() + "\n");
 		for (int t_idx : inst.result()) {

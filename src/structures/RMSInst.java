@@ -3,18 +3,18 @@ package structures;
 import utils.TupleOpr;
 import java.util.Set;
 
-public class MinErrorRMS {
+public class RMSInst {
 
     DualTree dualTree;
-    public MaxInst maxInst;
+    public SetCover sc;
     
     public double initTime = 0.0, addTreeTime = 0.0, addCovTime = 0.0, delTreeTime = 0.0, delCovTime = 0.0;
 
-    public MinErrorRMS(int dim, int k, int r, double eps, int data_size, int init_size, int sample_size, double[][] data, double[][] samples) {
+    public RMSInst(int dim, int k, int r, double eps, int data_size, int init_size, int sample_size, double[][] data, double[][] samples) {
         long t0 = System.nanoTime();
 
         this.dualTree = new DualTree(dim, k, eps, data_size, init_size, sample_size, data, samples);
-        this.maxInst = new MaxInst(r, sample_size, this);
+        this.sc = new SetCover(r, sample_size, this);
 
         long t1 = System.nanoTime();
         this.initTime += (t1 - t0) / 1e6;
@@ -31,7 +31,7 @@ public class MinErrorRMS {
 
         long t1 = System.nanoTime();
 
-        maxInst.update(operations);
+        sc.update(operations);
 
         long t2 = System.nanoTime();
 
@@ -45,6 +45,6 @@ public class MinErrorRMS {
     }
 
     public Set<Integer> result() {
-        return maxInst.result();
+        return sc.result();
     }
 }

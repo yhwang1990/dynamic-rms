@@ -1,6 +1,7 @@
 package main;
 
-import structures.MinErrorRMS;
+import structures.RMSInst;
+
 import utils.TupleOpr;
 import utils.VectorUtil;
 
@@ -9,97 +10,100 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class ME_n {
+public class RunRMS_d {
 
 	public static void main(String[] args) {
 		try {
-			runMinErrorRMS(args[0], args[1], args[2]);
+			runRMS(args[0], args[1], args[2]);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	private static void runMinErrorRMS(String dataPath, String tuplePath, String timePath) throws IOException {
+
+	private static void runRMS(String dataPath, String tuplePath, String timePath) throws IOException {
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
 		int k = 1, r = 50;
-		for (int data_size = 100_000; data_size <= 1_000_000; data_size += 100_000) {
-			double[][] data = readDataFile(dataPath, data_size);
-			if (data == null) {
-				System.err.println("error in reading data file");
-				System.exit(0);
-			}
-
-			int[] toBeDeleted = readWorkload(dataPath, data_size);
-			if (toBeDeleted == null) {
-				System.err.println("error in reading workload file");
-				System.exit(0);
-			}
-
-			int dim = data[0].length - 1;
-			int init_size = data_size - toBeDeleted.length;
-
-			int max_pow = 20;
-			double[][] samples = readUtilFile(dim, calcM(max_pow, dim));
-			if (samples == null) {
-				System.err.println("error in reading sample file");
-				System.exit(0);
-			}
-
-			List<TupleOpr> workLoad = new ArrayList<>();
-			for (int idx = init_size; idx < data_size; idx++)
-				workLoad.add(new TupleOpr(idx, 1));
-			for (int idx : toBeDeleted)
-				workLoad.add(new TupleOpr(idx, -1));
-
-			int init_pow = 14;
-			double init_eps = 0.0128;
-			if (dataPath.contains("AntiCorr"))
-				init_eps = 0.0512;
-			
-			Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, init_pow, data, samples);
-			
-			System.out.println(r + " " + pair.pow + " " + pair.eps);
-
-			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data, samples);
-
-			writeHeader(wr_result, dataPath, k, r, pair.eps, calcM(pair.pow, dim), data_size);
-			writeHeader(wr_time, dataPath, k, r, pair.eps, calcM(pair.pow, dim), data_size);
-			wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
-					+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
-
-			int interval = workLoad.size() / 10;
-			int output_id = 0;
-			for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
-				inst.update(workLoad.get(opr_id));
-				if (opr_id % interval == interval - 1) {
-					wr_time.write("idx=" + output_id + " ");
-					wr_time.write(Math.round(inst.addTreeTime) + " ");
-					wr_time.write(Math.round(inst.addCovTime) + " ");
-					wr_time.write(Math.round(inst.delTreeTime) + " ");
-					wr_time.write(Math.round(inst.delCovTime) + "\n");
-
-					writeResult(wr_result, output_id, inst, data);
-					output_id += 1;
-					wr_result.flush();
-					wr_time.flush();
-				}
-			}
-			inst = null;
-			System.gc();
+		double[][] data = readDataFile(dataPath);
+		if (data == null) {
+			System.err.println("error in reading data file");
+			System.exit(0);
 		}
+
+		int[] toBeDeleted = readWorkload(dataPath);
+		if (toBeDeleted == null) {
+			System.err.println("error in reading workload file");
+			System.exit(0);
+		}
+
+		int data_size = data.length, dim = data[0].length - 1;
+		int init_size = data_size - toBeDeleted.length;
+
+		int max_pow = 20;
+		
+		double[][] samples = readUtilFile(dim, calcM(max_pow, dim));
+		if (samples == null) {
+			System.err.println("error in reading sample file");
+			System.exit(0);
+		}
+
+		List<TupleOpr> workLoad = new ArrayList<>();
+		for (int idx = init_size; idx < data_size; idx++)
+			workLoad.add(new TupleOpr(idx, 1));
+		for (int idx : toBeDeleted)
+			workLoad.add(new TupleOpr(idx, -1));
+
+		int init_pow = 14;
+		double init_eps = 0.0128;
+		if (dataPath.contains("AntiCorr"))
+			init_eps = 0.0256;
+		
+		Pair pair = getParams(dim, k, r, data_size, init_size, init_eps, init_pow, data, samples);
+		
+		System.out.println(r + " " + pair.pow + " " + pair.eps);
+
+		RMSInst inst = new RMSInst(dim, k, r, pair.eps, data_size, init_size, calcM(init_pow, dim), data, samples);
+
+		writeHeader(wr_result, dataPath, k, r, pair.eps, calcM(init_pow, dim));
+		writeHeader(wr_time, dataPath, k, r, pair.eps, calcM(init_pow, dim));
+		wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
+				+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
+
+		int interval = workLoad.size() / 10;
+		int output_id = 0;
+		for (int opr_id = 0; opr_id < workLoad.size(); opr_id++) {
+			inst.update(workLoad.get(opr_id));
+			if (opr_id % interval == interval - 1) {
+				wr_time.write("idx=" + output_id + " ");
+				wr_time.write(Math.round(inst.addTreeTime) + " ");
+				wr_time.write(Math.round(inst.addCovTime) + " ");
+				wr_time.write(Math.round(inst.delTreeTime) + " ");
+				wr_time.write(Math.round(inst.delCovTime) + "\n");
+
+				writeResult(wr_result, output_id, inst, data);
+				output_id += 1;
+				wr_result.flush();
+				wr_time.flush();
+			}
+		}
+		inst = null;
+		System.gc();
+		
 		wr_result.close();
 		wr_time.close();
 	}
 
-	private static double[][] readDataFile(String filePath, int data_size) {
+	private static double[][] readDataFile(String filePath) {
 		try {
+			Path path = Paths.get(filePath);
+			int size = (int) Files.lines(path).count() - 1;
+
 			BufferedReader br = new BufferedReader(new FileReader(filePath));
 
 			int dim = Integer.parseInt(br.readLine());
-			double[][] data = new double[data_size][dim + 1];
+			double[][] data = new double[size][dim + 1];
 
 			String line;
 			int idx = 0;
@@ -108,8 +112,6 @@ public class ME_n {
 				for (int d = 0; d < dim; d++)
 					data[idx][d] = Double.parseDouble(tokens[d].trim());
 				idx++;
-				if (idx == data_size)
-					break;
 			}
 			br.close();
 
@@ -152,9 +154,9 @@ public class ME_n {
 		}
 	}
 
-	private static int[] readWorkload(String filePath, int data_size) {
+	private static int[] readWorkload(String filePath) {
 		try {
-			String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_" + data_size + "_wl.txt";
+			String wlPath = filePath.substring(0, filePath.length() - 4).split("_")[0] + "_wl.txt";
 			Path path = Paths.get(wlPath);
 			int size = (int) Files.lines(path).count();
 
@@ -173,8 +175,8 @@ public class ME_n {
 			return null;
 		}
 	}
-	
-	private static void writeResult(BufferedWriter wr, int idx, MinErrorRMS inst, double[][] data) throws IOException {
+
+	private static void writeResult(BufferedWriter wr, int idx, RMSInst inst, double[][] data) throws IOException {
 		DecimalFormat df = new DecimalFormat("0.000000");
 		wr.write("index " + idx + " " + inst.result().size() + "\n");
 		for (int t_idx : inst.result()) {
@@ -184,25 +186,25 @@ public class ME_n {
 		}
 	}
 
-	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int m, int n) throws IOException {
+	private static void writeHeader(BufferedWriter wr, String filePath, int k, int r, double eps, int m)
+			throws IOException {
 		wr.write("dataset " + filePath + " ");
 		wr.write("k=" + k + " ");
 		wr.write("r=" + r + " ");
 		wr.write("eps=" + eps + " ");
-		wr.write("m=" + m + " ");
-		wr.write("n=" + n + "\n");
+		wr.write("m=" + m + "\n");
 	}
 	
 	private static Pair getParams(int dim, int k, int r, int data_size, int init_size, double old_eps, int old_pow,
 			double[][] data, double[][] samples) {
-		int max_pow = Math.min(old_pow + 8, 20);
+		int max_pow = Math.min(old_pow + 4, 20);
 		int pow = old_pow;
 		double eps = old_eps;
 		while (eps > 1e-4 - 1e-9) {
 			while (pow <= max_pow) {
 				int test_m = calcM(pow, dim);
-				MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, test_m, data, samples);
-				int mr = test_inst.maxInst.mr;
+				RMSInst test_inst = new RMSInst(dim, k, r, eps, data_size, init_size, test_m, data, samples);
+				int mr = test_inst.sc.m;
 				test_inst = null;
 
 				if (mr >= test_m / 10 && mr <= test_m / 2)

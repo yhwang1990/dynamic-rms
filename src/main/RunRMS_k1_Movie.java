@@ -1,6 +1,6 @@
 package main;
 
-import structures.MinErrorRMS;
+import structures.RMSInst;
 
 import utils.TupleOpr;
 import utils.VectorUtil;
@@ -10,17 +10,17 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class ME_k1_MovieLens {
+public class RunRMS_k1_Movie {
 
 	public static void main(String[] args) {
 		try {
-			runMinErrorRMS(args[0], args[1], args[2]);
+			runRMS(args[0], args[1], args[2]);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void runMinErrorRMS(String dataPath, String tuplePath, String timePath) throws IOException {
+	private static void runRMS(String dataPath, String tuplePath, String timePath) throws IOException {
 		BufferedWriter wr_result = null, wr_time = null;
 		wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
 		wr_time = new BufferedWriter(new FileWriter(timePath, true));
@@ -73,7 +73,7 @@ public class ME_k1_MovieLens {
 
 			System.out.println(r + " " + pair.pow + " " + pair.eps);
 
-			MinErrorRMS inst = new MinErrorRMS(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data, samples);
+			RMSInst inst = new RMSInst(dim, k, r, pair.eps, data_size, init_size, calcM(pair.pow, dim), data, samples);
 
 			if (inst.result().size() <= r - 5 && pair.pow == max_pow && pair.eps < 0.0002) {
 				inst = null;
@@ -120,8 +120,8 @@ public class ME_k1_MovieLens {
 		while (eps > 1e-4 - 1e-9) {
 			while (pow <= max_pow) {
 				int test_m = calcM(pow, dim);
-				MinErrorRMS test_inst = new MinErrorRMS(dim, k, r, eps, data_size, init_size, test_m, data, samples);
-				int mr = test_inst.maxInst.mr;
+				RMSInst test_inst = new RMSInst(dim, k, r, eps, data_size, init_size, test_m, data, samples);
+				int mr = test_inst.sc.m;
 				test_inst = null;
 
 				if (mr >= test_m / 10 && mr <= test_m / 2)
@@ -207,7 +207,7 @@ public class ME_k1_MovieLens {
 		return workLoad;
 	}
 
-	private static void writeResult(BufferedWriter wr, int idx, MinErrorRMS inst, double[][] data) throws IOException {
+	private static void writeResult(BufferedWriter wr, int idx, RMSInst inst, double[][] data) throws IOException {
 		DecimalFormat df = new DecimalFormat("0.000000");
 		wr.write("index " + idx + " " + inst.result().size() + "\n");
 		for (int t_idx : inst.result()) {
