@@ -88,7 +88,7 @@ public class RunRMS {
                 runRMS(dataset, k, r, dim, size);
             } catch (ParseException pe) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("Log messages to sequence diagrams converter", options);
+                formatter.printHelp("runRMS.jar", options);
                 System.exit(1);
             }
         } catch (IOException e) {
