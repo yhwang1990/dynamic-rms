@@ -7,7 +7,7 @@ public class SetCover {
     public int r, m, maxM;
     private Map<Integer, HashSet<Integer>> setSystem;
 
-    private RMSInst rmsInst;
+    private final RMSInst rmsInst;
     private SetCoverInst scInst;
 
     SetCover(int r, int max_mr, RMSInst mrInst) {
@@ -94,12 +94,12 @@ public class SetCover {
     }
 
     private class SetCoverInst {
-        private DensityLevel[] levels;
+        private final DensityLevel[] levels;
 
-        private int[] u_assign;
-        private int[] u_level;
+        private final int[] u_assign;
+        private final int[] u_level;
 
-        private Map<Integer, SolInfo> sol;
+        private final Map<Integer, SolInfo> sol;
 
         private SetCoverInst() {
             int left = r, right = maxM;
@@ -776,9 +776,9 @@ public class SetCover {
         }
 
         private class RankSet {
-            private int idx;
-            private int set_size;
-            private Set<Integer> uncovered;
+            private final int idx;
+            private final int set_size;
+            private final Set<Integer> uncovered;
 
             private RankSet(int idx, Set<Integer> set) {
                 this.idx = idx;
@@ -801,9 +801,10 @@ public class SetCover {
         }
 
         private class DensityLevel {
-            private int low, high;
-            private Set<Integer> tuples;
-            private Map<Integer, Integer> density;
+            private final int low;
+            private final int high;
+            private final Set<Integer> tuples;
+            private final Map<Integer, Integer> density;
 
             private DensityLevel(int level_idx) {
                 this.low = (int) Math.pow(2, level_idx);
@@ -816,7 +817,7 @@ public class SetCover {
 
         private class SolInfo {
             private int level_idx;
-            private Set<Integer> cov;
+            private final Set<Integer> cov;
 
             private SolInfo(RankSet rankSet) {
                 this.level_idx = (int) Math.floor(Math.log(rankSet.uncovered.size()) / Math.log(2));

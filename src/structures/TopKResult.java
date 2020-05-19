@@ -27,11 +27,14 @@ public class TopKResult {
             exact_result.offer(new RankItem(idx, score));
             k_updated = true;
             if (exact_result.size() == k) {
+                assert exact_result.peek() != null;
                 k_score = exact_result.peek().score;
             } else if (exact_result.size() > k) {
                 RankItem deleted_item = exact_result.poll();
+                assert exact_result.peek() != null;
                 k_score = exact_result.peek().score;
 
+                assert deleted_item != null;
                 if (deleted_item.score > (1 - eps) * k_score + 1e-9)
                     approximate_result.offer(deleted_item);
 
@@ -55,8 +58,10 @@ public class TopKResult {
 
             if (exact_result.size() > k) {
                 RankItem deleted_item = exact_result.poll();
+                assert exact_result.peek() != null;
                 k_score = exact_result.peek().score;
 
+                assert deleted_item != null;
                 if (deleted_item.score > (1 - eps) * k_score + 1e-9) {
                     approximate_result.offer(deleted_item);
                 } else {

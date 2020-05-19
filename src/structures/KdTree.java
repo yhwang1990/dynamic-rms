@@ -5,9 +5,9 @@ import java.util.*;
 
 public class KdTree {
 
-    private KdNode root;
-    private int dim;
-    private int capacity;
+    private final KdNode root;
+    private final int dim;
+    private final int capacity;
 
     boolean[] isDeleted;
     double[][] data;
@@ -445,8 +445,7 @@ public class KdTree {
     }
 
     private class CoordComp implements Comparator<Integer> {
-
-        private int coord;
+        private final int coord;
 
         private CoordComp(int coord) {
             this.coord = coord;

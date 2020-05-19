@@ -2,14 +2,15 @@ package structures;
 
 public class DualTree {
 
-	public KdTree tIdx;
-	public ConeTree uIdx;
+    public KdTree tIdx;
+    public ConeTree uIdx;
 
     int data_size, init_size, sample_size;
 
     double[][] data, samples;
 
-    public DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size, double[][] data, double[][] samples) {
+    public DualTree(int dim, int k, double eps, int data_size, int init_size, int sample_size, double[][] data,
+                    double[][] samples) {
         double tau = 0.99;
         int leaf_size = Math.max(5, 2 * k);
 
@@ -21,7 +22,6 @@ public class DualTree {
         this.sample_size = sample_size;
 
         this.tIdx = new KdTree(dim + 1, leaf_size, this);
-
         this.uIdx = new ConeTree(dim + 1, k, eps, tau, this);
     }
 

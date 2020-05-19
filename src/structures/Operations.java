@@ -9,9 +9,9 @@ public class Operations {
     List<Integer> utilities;
     List<SetOpr> oprs;
 
-    public Operations(final int t_idx, final int oprType) {
-        this.t_idx = t_idx;
-        this.oprType = oprType;
+    public Operations(final int idx, final int type) {
+        this.t_idx = idx;
+        this.oprType = type;
 
         this.utilities = new ArrayList<>();
         this.oprs = new ArrayList<>();

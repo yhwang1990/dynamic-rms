@@ -22,8 +22,10 @@ public class RankItem implements Comparable<RankItem> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof RankItem)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof RankItem))
+            return false;
         RankItem item = (RankItem) o;
         return idx == item.idx;
     }

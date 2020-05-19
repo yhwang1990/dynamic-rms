@@ -6,13 +6,13 @@ import java.util.*;
 
 public class ConeTree {
 
-    private DualTree dualTree;
-    private ConeNode root;
+    private final DualTree dualTree;
+    private final ConeNode root;
 
-    private int dim;
-    private int k;
-    private double eps;
-    private double tau;
+    private final int dim;
+    private final int k;
+    private final double eps;
+    private final double tau;
 
     double[][] samples;
     public TopKResult[] topKResults;
@@ -153,13 +153,15 @@ public class ConeTree {
     }
 
     private class ConeNode {
-        private int size;
-        private double[] centroid;
+        private final int size;
+        private final double[] centroid;
         private double cosine_aperture, min_k_score;
 
         private NodeType nodeType;
-        private List<Integer> utilities;
-        private ConeNode lc, rc, par;
+        private final List<Integer> utilities;
+        private ConeNode lc;
+        private ConeNode rc;
+        private final ConeNode par;
 
         private ConeNode(ConeNode par, List<Integer> utilities) {
             this.par = par;
