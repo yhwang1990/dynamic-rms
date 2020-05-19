@@ -131,10 +131,10 @@ public class RunRMS_eps {
         for (double eps : epsValues) {
             int pow = getSampleSize(dim, k, r, data_size, init_size, eps, data, samples);
             System.out.println(r + " " + pow + " " + eps);
-            RMSInst inst = new RMSInst(dim, k, r, eps, data_size, init_size, maxM, data, samples);
+            RMSInst inst = new RMSInst(dim, k, r, eps, data_size, init_size, calcM(pow, dim), data, samples);
 
-            writeHeader(wr_result, paths[0], k, r, eps, maxM);
-            writeHeader(wr_time, paths[0], k, r, eps, maxM);
+            writeHeader(wr_result, paths[0], k, r, eps, calcM(pow, dim));
+            writeHeader(wr_time, paths[0], k, r, eps, calcM(pow, dim));
             wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
                     + (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
             int interval = workLoad.size() / 10;
