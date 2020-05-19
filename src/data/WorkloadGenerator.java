@@ -10,12 +10,11 @@ import java.util.Random;
 public class WorkloadGenerator {
 
     public static void main(String[] args) {
-        generateWorkload();
+        generateWorkload(13176);
     }
 
-    private static void generateWorkload() {
+    private static void generateWorkload(int size) {
         Random rand = new Random(0);
-        int size = 13176;
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter("../MovieLens_wl.txt"));
             ArrayList<Integer> toBeDeleted = new ArrayList<>();

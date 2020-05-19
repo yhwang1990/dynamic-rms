@@ -22,6 +22,7 @@ public class Validation {
         for (int i = 0; i < 10; i++) {
             String datasetName = filePath.substring(0, filePath.length() - 4);
             String dataPath = datasetName + "_" + i + ".txt";
+
             double[][] data = readDataFile(dataPath);
             assert data != null;
             int dim = data[0].length - 1;

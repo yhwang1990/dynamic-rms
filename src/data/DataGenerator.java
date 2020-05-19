@@ -1,7 +1,5 @@
 package data;
 
-import generators.TupleGenerator;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,8 +8,8 @@ import java.text.DecimalFormat;
 public class DataGenerator {
 
     public static void main(String[] args) {
-    	double[][] data = generateAntiCorr(1_000_000, 6);
-    	writeToFile("./dataset/AntiCorr1M_" + 6 + "d.txt", data, 6);
+        double[][] data = generateAntiCorr(1_000_000, 6);
+        writeToFile("./dataset/AntiCorr1M_" + 6 + "d.txt", data, 6);
     }
 
     public static void writeToFile(String filename, double[][] data, int dim) {
@@ -34,18 +32,10 @@ public class DataGenerator {
         }
     }
 
-    public static double[][] generateIndep(int size, int dim) {
+    public static double[][] generateUniform(int size, int dim) {
         double[][] data = new double[size][dim];
         for (int i = 0; i < size; i++) {
-            TupleGenerator.generateIndep(dim, data[i]);
-        }
-        return data;
-    }
-
-    public static double[][] generateCorr(int size, int dim) {
-        double[][] data = new double[size][dim];
-        for (int i = 0; i < size; i++) {
-            TupleGenerator.generateCorr(dim, data[i]);
+            TupleGenerator.generateUniform(dim, data[i]);
         }
         return data;
     }

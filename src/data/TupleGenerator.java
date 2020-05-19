@@ -1,11 +1,11 @@
-package generators;
+package data;
 
 import java.util.Random;
 
 import utils.VectorUtil;
 
 public class TupleGenerator {
-    private static Random RAND = new Random(0);
+    private static final Random RAND = new Random(0);
 
     public static double[][] uniformGenerator(int dim, int size) {
         double[][] tuples = new double[size][dim + 1];
@@ -39,7 +39,6 @@ public class TupleGenerator {
         return randPeak(med - var, med + var, 12);
     }
 
-
     private static boolean isNotValid(int dim, double[] x) {
         for (int d = 0; d < dim; d++) {
             if (x[d] < 0.0 || x[d] > 1.0)
@@ -49,34 +48,10 @@ public class TupleGenerator {
     }
 
 
-    public static void generateIndep(int dim, double[] values) {
+    public static void generateUniform(int dim, double[] values) {
         for (int i = 0; i < dim; ++i)
             values[i] = randEqual(0, 1);
     }
-
-    public static void generateCorr(int dim, double[] values) {
-        int i;
-        double[] x = new double[dim];
-
-        do {
-            double v = randPeak(0, 1, dim);
-            double l = v <= 0.5 ? v : 1.0 - v;
-
-            for (i = 0; i < dim; ++i)
-                x[i] = v;
-
-            for (i = 0; i < dim; ++i) {
-                double h = randNormal(0, l);
-
-                x[i] += h;
-                x[(i + 1) % dim] -= h;
-            }
-        } while (isNotValid(dim, x));
-
-        for (i = 0; i < dim; ++i)
-            values[i] = x[i];
-    }
-
 
     public static void generateAnti(int dim, double[] values) {
         int i;

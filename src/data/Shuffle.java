@@ -15,10 +15,12 @@ public class Shuffle {
 
             bw.write(br.readLine());
             bw.write("\n");
+
             String line;
             ArrayList<String> data = new ArrayList<>();
             while ((line = br.readLine()) != null)
                 data.add(line);
+
             Collections.shuffle(data, new Random(0));
             for (String s : data) {
                 bw.write(s);

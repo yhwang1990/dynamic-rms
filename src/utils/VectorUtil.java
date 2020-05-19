@@ -24,25 +24,25 @@ public class VectorUtil {
         }
     }
 
-    public static double dist(double[] p, double[] q) {
-        assert p.length == q.length : "dimension not match";
+//    public static double dist(double[] p, double[] q) {
+//        assert p.length == q.length : "dimension not match";
+//
+//        double sum = 0.0;
+//        for (int i = 0; i < p.length; i++) {
+//            sum += (p[i] - q[i]) * (p[i] - q[i]);
+//        }
+//        return Math.sqrt(sum);
+//    }
 
-        double sum = 0.0;
-        for (int i = 0; i < p.length; i++) {
-            sum += (p[i] - q[i]) * (p[i] - q[i]);
-        }
-        return Math.sqrt(sum);
-    }
-
-    public static double dist2(double[] p, double[] q) {
-        assert p.length == q.length : "dimension not match";
-
-        double sum = 0.0;
-        for (int i = 0; i < p.length; i++) {
-            sum += (p[i] - q[i]) * (p[i] - q[i]);
-        }
-        return sum;
-    }
+//    public static double dist2(double[] p, double[] q) {
+//        assert p.length == q.length : "dimension not match";
+//
+//        double sum = 0.0;
+//        for (int i = 0; i < p.length; i++) {
+//            sum += (p[i] - q[i]) * (p[i] - q[i]);
+//        }
+//        return sum;
+//    }
 
     public static double inner_product(double[] p, double[] q) {
         assert p.length == q.length : "dimension not match";
@@ -70,9 +70,9 @@ public class VectorUtil {
         return sum;
     }
 
-    public static double dist2product(int dim, double dist2) {
-        return (1.0 + dim - dist2) / 2.0;
-    }
+//    public static double dist2product(int dim, double dist2) {
+//        return (1.0 + dim - dist2) / 2.0;
+//    }
 
     public static double prod2dist(int dim, double product) {
         return 1.0 + dim - 2.0 * product;

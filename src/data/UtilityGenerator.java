@@ -1,8 +1,17 @@
-package generators;
+package data;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class UtilityGenerator {
+	public static void main(String[] args) {
+		ArrayList<double[]> samples = UtilityGenerator.balancedGenerator(12, 4_400_000);
+		writeToFile(12, samples);
+	}
+
     public static double[][] gaussianGenerator(int dim, int size) {
     	Random RAND = new Random(17);
         double[][] samples = new double[size][dim];
@@ -31,38 +40,34 @@ public class UtilityGenerator {
         HashMap<Integer, ArrayList<double[]>> subSamples = new HashMap<>();
         int subSize = size / (1 << (dim / 2)), idx = 0;
         System.out.println(dim + "," + subSize);
-        while (true) {
-        	double len = 0;
-        	double[] sample = new double[dim];
-        	while(len == 0) {
-        	    for(int d = 0; d < dim; d++) {
-        	    	double rand = RAND.nextGaussian();
-        	    	sample[d] = rand;
-        	    	len += rand * rand;
-        	    }
-        	    len = Math.sqrt(len);
-        	}
-        	for (int d = 0; d < dim; d++)
-        		sample[d] = Math.abs(sample[d] / len);
-        	
-        	int code = 0;
-        	for (int j = 0; j < dim / 2; j++) {
-        		if (sample[j * 2] > sample[j * 2 + 1])
-        			code = code * 10 + 1;
-        		else
-        			code = code * 10;
-        	}
-        	if (subSamples.containsKey(code)) {
-        		subSamples.get(code).add(sample);
-        	} else {
-        		ArrayList<double[]> subSample = new ArrayList<>();
-        		subSamples.put(code, subSample);
-        		subSamples.get(code).add(sample);
-        	}
-        	if ((++idx) % 10000 == 0 && isBalanced(subSize, subSamples)) {
-        		break;
-        	}
-        }
+		do {
+			double len = 0;
+			double[] sample = new double[dim];
+			while (len == 0) {
+				for (int d = 0; d < dim; d++) {
+					double rand = RAND.nextGaussian();
+					sample[d] = rand;
+					len += rand * rand;
+				}
+				len = Math.sqrt(len);
+			}
+			for (int d = 0; d < dim; d++)
+				sample[d] = Math.abs(sample[d] / len);
+
+			int code = 0;
+			for (int j = 0; j < dim / 2; j++) {
+				if (sample[j * 2] > sample[j * 2 + 1])
+					code = code * 10 + 1;
+				else
+					code = code * 10;
+			}
+			if (!subSamples.containsKey(code)) {
+				ArrayList<double[]> subSample = new ArrayList<>();
+				subSamples.put(code, subSample);
+			}
+			subSamples.get(code).add(sample);
+		} while ((++idx) % 10000 != 0 || !isBalanced(subSize, subSamples));
+
         System.out.println(dim + "," + subSamples.size());
         System.out.println(dim + "," + idx);
         
@@ -97,5 +102,23 @@ public class UtilityGenerator {
 				return false;
 		}
 		return true;
+	}
+
+	private static void writeToFile(int dim, ArrayList<double[]> samples) {
+		DecimalFormat df = new DecimalFormat("0.000000");
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter("utils_" + dim + "d.txt"));
+			for (double[] sample : samples) {
+				StringBuilder sb = new StringBuilder();
+				for (int d = 0; d < dim; d++)
+					sb.append(df.format(sample[d])).append(" ");
+				sb.deleteCharAt(sb.length() - 1).append("\n");
+				bw.write(sb.toString());
+			}
+			bw.flush();
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

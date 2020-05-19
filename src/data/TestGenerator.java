@@ -1,7 +1,5 @@
 package data;
 
-import generators.UtilityGenerator;
-
 import java.io.*;
 import java.text.*;
 
