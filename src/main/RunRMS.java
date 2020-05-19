@@ -45,8 +45,8 @@ public class RunRMS {
 		int data_size = data.length, dim = data[0].length - 1;
 		int init_size = data_size - toBeDeleted.length;
 
-		int m = dim + (1 << pow) + 1;
-		double[][] samples = readUtilFile(dim, m);
+		int maxM = dim + (1 << pow) + 1;
+		double[][] samples = readUtilFile(dim, maxM);
 		if (samples == null) {
 			System.err.println("error in reading samples");
 			System.exit(0);
@@ -58,12 +58,12 @@ public class RunRMS {
 		for (int idx : toBeDeleted)
 			workLoad.add(new TupleOpr(idx, -1));
 
-		System.out.println(r + " " + m + " " + eps);
+		System.out.println(r + " " + maxM + " " + eps);
 			
-		RMSInst inst = new RMSInst(dim, k, r, eps, data_size, init_size, m, data, samples);
+		RMSInst inst = new RMSInst(dim, k, r, eps, data_size, init_size, maxM, data, samples);
 
-		writeHeader(wr_result, args[0], k, r, eps, m);
-		writeHeader(wr_time, args[0], k, r, eps, m);
+		writeHeader(wr_result, args[0], k, r, eps, maxM);
+		writeHeader(wr_time, args[0], k, r, eps, maxM);
 		wr_time.write("init_time=" + Math.round(inst.initTime) + " inserts="
 			+ (workLoad.size() - toBeDeleted.length) + " deletes=" + toBeDeleted.length + "\n");
 		int interval = workLoad.size() / 10;
