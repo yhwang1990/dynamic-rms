@@ -25,6 +25,7 @@
 hs_err_pid*
 
 .idea/
+.settings/
 libs/
 out/
 /src/Test.java
@@ -35,3 +36,4 @@ out/
 /.classpath
 /.project
 /bin/
+/dynamic-rms.iml
