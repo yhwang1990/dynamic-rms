@@ -89,7 +89,7 @@ public class RunRMS_eps {
                 runRMS(dataset, k, r, dim, size);
             } catch (ParseException pe) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("runRMS.jar", options);
+                formatter.printHelp("runRMS-eps.jar", options);
                 System.exit(1);
             }
         } catch (IOException e) {
