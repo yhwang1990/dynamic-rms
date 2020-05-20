@@ -12,7 +12,7 @@ import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class RunRMSInst {
+public class RunRMS_inst {
 
     public static void main(String[] args) {
         try {
@@ -114,7 +114,7 @@ public class RunRMSInst {
                 runRMS(dataFile, resultPrefix, k, r, dim, eps, pow);
             } catch (ParseException pe) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("runRMS.jar", options);
+                formatter.printHelp("runRMS-inst.jar", options);
                 System.exit(1);
             }
         } catch (IOException e) {
@@ -124,12 +124,12 @@ public class RunRMSInst {
 
     private static void runRMS(String dataFile, String resultPrefix, int k, int r, int dim, double eps, int pow) throws IOException {
     	
-    	String resultPath = resultPrefix + "_result.txt";
+    	String timePath = resultPrefix + "_time.txt";
     	String tuplePath = resultPrefix + "_tuple.txt";
 
         BufferedWriter wr_result, wr_time;
-        wr_result = new BufferedWriter(new FileWriter(resultPath, true));
-        wr_time = new BufferedWriter(new FileWriter(tuplePath, true));
+        wr_result = new BufferedWriter(new FileWriter(tuplePath, true));
+        wr_time = new BufferedWriter(new FileWriter(timePath, true));
 
         double[][] data = readDataFile(dataFile);
 
