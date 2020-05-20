@@ -122,10 +122,9 @@ public class RunRMS_eps {
             workLoad.add(new TupleOpr(idx, -1));
 
 
-        double[] epsValues = new double[12];
-        epsValues[0] = 0;
-        for (int i = 1; i < 12; ++i) {
-            epsValues[i] = 0.0001 * Math.pow(2, i - 1);
+        double[] epsValues = new double[11];
+        for (int i = 0; i < 11; ++i) {
+            epsValues[i] = 0.0001 * Math.pow(2, i);
         }
 
         for (double eps : epsValues) {
