@@ -8,8 +8,8 @@ import java.util.*;
 
 public class UtilityGenerator {
 	public static void main(String[] args) {
-		ArrayList<double[]> samples = UtilityGenerator.balancedGenerator(12, 4_400_000);
-		writeToFile(12, samples);
+		ArrayList<double[]> samples = UtilityGenerator.balancedGenerator(3, 1_100_000);
+		writeToFile(3, samples);
 	}
 
     public static double[][] gaussianGenerator(int dim, int size) {

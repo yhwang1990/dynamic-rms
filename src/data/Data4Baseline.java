@@ -12,7 +12,7 @@ import java.util.List;
 
 public class Data4Baseline {
     public static void main(String[] args) {
-    	generateData4Baseline("../AirQuality.txt");
+    	generateData4Baseline("../AntiCorr_2d.txt");
     }
 
     private static void generateData4Baseline(String dataPath) {

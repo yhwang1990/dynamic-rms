@@ -6,12 +6,12 @@ import java.text.*;
 public class TestGenerator {
 
     public static void main(String[] args) {
-        for (int d = 4; d <= 10; d++) {
+        for (int d = 2; d <= 3; d++) {
             double[][] samples = UtilityGenerator.gaussianGenerator(d, 1_000_000);
             writeToFile(d, samples);
         }
-    	double[][] samples = UtilityGenerator.gaussianGenerator(12, 1_000_000);
-        writeToFile(12, samples);
+    	// double[][] samples = UtilityGenerator.gaussianGenerator(12, 1_000_000);
+        // writeToFile(12, samples);
     }
 
     private static void writeToFile(int dim, double[][] samples) {
