@@ -88,7 +88,7 @@ public class RunRMS_mixed {
                 runRMS(dataset, k, r, dim, size);
             } catch (ParseException pe) {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("runRMS.jar", options);
+                formatter.printHelp("runRMS-mix.jar", options);
                 System.exit(1);
             }
         } catch (IOException e) {
