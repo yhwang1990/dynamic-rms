@@ -59,4 +59,4 @@ To run FD-RMS with customized parameter settings:
 
 ## Contact
 
-If there is any question, feel free to contact [Yanhao Wang](mailto:yanhao90@comp.nus.edu.sg).
+If there is any question, feel free to contact [Yanhao Wang](mailto:yanhao.wang@helsinki.fi).
