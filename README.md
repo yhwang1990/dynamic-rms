@@ -18,7 +18,7 @@ JDK 8+
 
 **Workload File**: Each line of the workload file represents one tuple deletion from the dataset. Please refer to [dataset/NBA/NBA_wl.txt](dataset/NBA/NBA_wl.txt) for an example.
 
-If you need other datasets used in our paper, feel free to contact [Yanhao Wang](mailto:yhwang@dase.cnu.edu.cn). We do not include them in this repository because their sizes are too large.
+If you need other datasets used in our paper, feel free to contact [Yanhao Wang](mailto:yhwang@dase.ecnu.edu.cn). We do not include them in this repository because their sizes are too large.
 
 ### 2. How to Run the Code
 
@@ -59,4 +59,4 @@ To run FD-RMS with customized parameter settings:
 
 ## Contact
 
-If there is any question, feel free to contact [Yanhao Wang](mailto:yhwang@dase.cnu.edu.cn).
+If there is any question, feel free to contact [Yanhao Wang](mailto:yhwang@dase.ecnu.edu.cn).
